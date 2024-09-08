@@ -11,7 +11,7 @@ if(NOT IS_MULTI_CONFIG)
 endif()
 
 # Add c++11 support whatever the compiler
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Warning fiesta!
@@ -34,7 +34,11 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/fibo.cpp
     ${PROJECT_SOURCE_DIR}/src/args.cpp
     ${PROJECT_SOURCE_DIR}/src/polymorph.cpp
-    ${PROJECT_SOURCE_DIR}/src/stdoutredirect.cpp)
+    ${PROJECT_SOURCE_DIR}/src/stdoutredirect.cpp
+    ${PROJECT_SOURCE_DIR}/src/const.cpp
+    ${PROJECT_SOURCE_DIR}/src/ACov.cpp
+    ${PROJECT_SOURCE_DIR}/src/CovAniso.cpp)
+
 
 # Generation folder (into Release or Debug)
 if (NOT IS_MULTI_CONFIG)

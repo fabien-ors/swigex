@@ -1,5 +1,5 @@
 # Test sources
-set(TEST_SOURCES testFibo.cpp testArgs.cpp testPolymorph.cpp testVectorT.cpp)
+set(TEST_SOURCES testFibo.cpp testArgs.cpp testPolymorph.cpp testVectorT.cpp testconst.cpp)
 
 # Generation folder
 if (IS_MULTI_CONFIG)

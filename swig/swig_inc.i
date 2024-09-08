@@ -10,6 +10,9 @@
   #include "args.hpp"
   #include "polymorph.hpp"
   #include "stdoutredirect.hpp"
+  #include "const.hpp"
+  #include "ACov.hpp"
+  #include "CovAniso.hpp"
 %}
 
 ////////////////////////////
