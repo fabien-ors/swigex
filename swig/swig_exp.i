@@ -4,8 +4,6 @@
 // Remind that swig %include doesn't follow #include inclusion.
 // You must cite below each single header file that you want to export!
 // Put low level headers in first positions (otherwise Syntax error in input(1).)
-
-#include <future>
 %include swigex_export.hpp // Do not forget this file in priority (for SWIG preprocessor)
 %include swigex_define.hpp
 
@@ -32,5 +30,4 @@
 #pragma SWIG nowarn=511
 
 
-%include <std_shared_ptr.i>
-%shared_ptr(File);
+

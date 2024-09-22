@@ -2,8 +2,6 @@
 
 #include "ACov.hpp"
 #include "swigex_export.hpp"
-#include "swigex_define.hpp"
-#include "VectorNumT.hpp"
 
 class ACov;
 
@@ -14,7 +12,7 @@ class SWIGEX_EXPORT CovAniso : public ACov
 {
   public:
     CovAniso (double a = 1.);
-    double evalCov (double h) const override {return exp(-h/_scale);}
+    double evalCov (double h) const override;
     virtual ~CovAniso(){};
 
   protected:

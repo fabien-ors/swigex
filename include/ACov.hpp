@@ -1,8 +1,7 @@
 #pragma once
 
 #include "swigex_export.hpp"
-#include "swigex_define.hpp"
-#include "VectorNumT.hpp"
+#include <string>
 #include <vector>
 
 class ACov;

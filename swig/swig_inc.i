@@ -13,6 +13,7 @@
   #include "const.hpp"
   #include "ACov.hpp"
   #include "CovAniso.hpp"
+  #include <memory>  // Pour std::shared_ptr
 %}
 
 ////////////////////////////
@@ -22,6 +23,7 @@
 // Mandatory for using swig::asptr and swig::from for std::vectors
 %include std_vector.i
 %include std_string.i
+%include std_shared_ptr.i
 %template(DoNotUseVectorIntStd)     std::vector< int >;
 %template(DoNotUseVectorDoubleStd)  std::vector< double >;
 %template(DoNotUseVectorStringStd)  std::vector< std::string >; // Keep std::string here otherwise asptr fails!
@@ -235,3 +237,5 @@
     SWIG_exception_fail(SWIG_ArgError(errcode), "in method $symname, wrong return value: $type");
 }
 
+
+%shared_ptr(File);

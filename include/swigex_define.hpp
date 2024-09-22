@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <math.h>
+#include <memory>
 typedef std::string String;
 
 #define DEFAULT_TITLE "Fibonacci List"
