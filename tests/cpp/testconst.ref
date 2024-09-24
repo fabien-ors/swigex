@@ -1,0 +1,13 @@
+obj 1
+p 2
+pc 3
+cp 4
+cpc 5
+obj 1
+p -1
+pc -1
+cp -1
+cpc -1
+destruction of obj
+destruction of shr
+destruction of obj

@@ -5,7 +5,7 @@
 
 int main()
 {
-  //StdoutRedirect sr("testconst.out");
+  StdoutRedirect sr("testconst.out");
   
   File  a(1,"obj");
   File* b = new File(2,"p");
@@ -15,7 +15,7 @@ int main()
   std::shared_ptr<const File> f(new File(5,"shr"));
 
   //std::shared_ptr<const File> f(new File(6,"sh"));
-  Folder folder(a,b,c,d,e,f);
+  Folder folder(a,b,c,d,e/*,f*/);
   folder.display();
 
   a.setA(-1);
