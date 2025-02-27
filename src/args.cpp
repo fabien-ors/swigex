@@ -11,12 +11,18 @@ TypeClass::TypeClass()
 , _varVectorDouble()
 , _varVVectorDouble()
 , _varVectorString()
+, _varVectorDoublePtr(nullptr)
 {
 
 }
 TypeClass::~TypeClass()
 {
 
+}
+
+void TypeClass::printPtr() const
+{
+  std::cout << "_varVectorDoublePtr: " << *_varVectorDoublePtr << std::endl;
 }
 
 int TypeClass::testInt(int a)
@@ -182,6 +188,16 @@ void TypeClass::testVectorDoubleRefDef(const VectorDouble& a, const VectorDouble
 {
   _varVectorDouble = a;
   std::cout << "Test VectorDouble Reference Def: " << a << " - " << b << std::endl;
+}
+
+void TypeClass::testVectorDoublePtrDef(const VectorDouble* a)
+{
+  if (a == nullptr) 
+    _varVectorDouble.clear();
+  else
+    _varVectorDouble = *a;
+  _varVectorDoublePtr = a;
+  std::cout << "Test VectorDouble Pointer Def: " << _varVectorDouble << std::endl;
 }
 
 VectorVectorDouble TypeClass::testVVectorDouble(VectorVectorDouble a)

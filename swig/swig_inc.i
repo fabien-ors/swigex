@@ -109,7 +109,6 @@
 %typemap(in, fragment="ToCpp") const VectorInt&    (void *argp, VectorInt vec),
                                const VectorInt*    (void *argp, VectorInt vec),
                                const VectorDouble& (void *argp, VectorDouble vec),
-                               const VectorDouble* (void *argp, VectorDouble vec),
                                const VectorString& (void *argp, VectorString vec),
                                const VectorString* (void *argp, VectorString vec)
 {
@@ -139,6 +138,45 @@
   }
   else {
     $1 = &vec;
+  }
+}
+
+%typemap(in, fragment="ToCpp") const VectorDouble* (void *argp)
+{
+  // Try to convert from any target language vector
+  // TODO: Attention on cree une fuite memoire volontairement
+  // (seule maniere de pereniser le pointeur).
+  // auto vec = std::make_shared<VectorDouble>(); A ameliorer
+  VectorDouble* vec = new VectorDouble();
+  int errcode = vectorToCpp($input, *vec);
+  if (errcode == SWIG_NullReferenceError)
+  {
+    $1 = nullptr;
+  }
+  else if (!SWIG_IsOK(errcode))
+  {
+    try
+    {
+      // Try direct conversion of Vectors by reference/pointer (see swigtypes.swg)
+      errcode = SWIG_ConvertPtr($input, &argp, $descriptor, %convertptr_flags);
+      if (SWIG_IsOK(errcode))
+      {
+        if (!argp) {
+          %argument_nullref("$type", $symname, $argnum);
+        }
+        $1 = %reinterpret_cast(argp, $ltype);
+      }
+      else {
+        %argument_fail(errcode, "$type", $symname, $argnum);
+      }
+    }
+    catch(...)
+    {
+      %argument_fail(errcode, "$type", $symname, $argnum);
+    }
+  }
+  else {
+    $1 = vec;
   }
 }
 

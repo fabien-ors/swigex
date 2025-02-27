@@ -14,6 +14,8 @@ public:
   ~TypeClass();
 //                                                                                     //   R         Python
 
+  void printPtr() const;
+
   int testInt(int a);                                                                  //   OK        OK
   const int& testIntRef(const int& a);                                                 //   OK        OK
   const int* testIntPtr(const int* a);                                                 //   ## NOK    OK
@@ -48,6 +50,7 @@ public:
   void testVectorDoubleRefOut(VectorDouble& a) const;                                  //   OK        OK
   void testVectorDoubleRefDef(const VectorDouble& a = VectorDouble({2.1,3.1}),         //   OK        OK
                               const VectorDouble& b = VectorDouble({4.1,5.1}));
+  void testVectorDoublePtrDef(const VectorDouble* a = nullptr);
 
   VectorVectorDouble testVVectorDouble(VectorVectorDouble a);                          //   OK        OK
   const VectorVectorDouble& testVVectorDoubleRef(const VectorVectorDouble& a);         //   OK        OK
@@ -89,4 +92,5 @@ private:
   VectorDouble       _varVectorDouble;
   VectorVectorDouble _varVVectorDouble;
   VectorString       _varVectorString;
+  const VectorDouble*      _varVectorDoublePtr;
 };

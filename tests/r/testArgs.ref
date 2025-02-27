@@ -1,92 +1,95 @@
 Test int: 12
-integer
+integer 
 Test int Reference: 22
-integer
+integer 
 Test int Reference Def: 2 - 3
 Test int Reference Def: 3 - 3
 Test int Reference Def: 2 - 5
 Test VectorInt: [23 33 43]
-integer
+integer 
 Test VectorInt Reference: [24 34 44]
 Test VectorInt Reference: [24 34 44]
-integer
+integer 
 Test VectorInt Pointer: [25 35 45]
-integer
+integer 
 Test VectorInt: [26 36]
 Test VectorInt Reference: [26 36]
 Test VectorInt Pointer: [26 36]
 Test VectorInt Reference Out: [26 36]
-_p_VectorNumTT_int_t
+_p_VectorNumTT_int_t 
 Test VectorInt Reference Def: [2 3] - [4 5]
 Test VectorInt Reference Def: [] - [4 5]
 Test VectorInt Reference Def: [] - [4 5]
 Test VectorInt Reference Def: [3] - [4 5]
 Test VectorInt Reference Def: [3] - [4 5]
 Test VectorVectorInt: [[23 33 43] [53 63] [73 83 93]]
-list
+list 
 Test VectorVectorInt Reference: [[24 34 44] [54 64] [74 84 94]]
 Test VectorVectorInt Reference: [[24 34 44] [54 64] [74 84 94]]
-list
+list 
 Test VectorVectorInt Pointer: [[25 35 45] [55 65] [75 85 95]]
-list
+list 
 Test VectorVectorInt: [[26 36] [56 66]]
 Test VectorVectorInt Reference: [[26 36] [56 66]]
 Test VectorVectorInt Pointer: [[26 36] [56 66]]
 Test VectorVectorInt Reference Out: [[26 36] [56 66]]
 _p_VectorTT_VectorNumTT_int_t_t 
 Test double: 12.1
-numeric
+numeric 
 Test double Reference: 22.2
-numeric
+numeric 
 Test Double Reference Def: 2 - 3
 Test Double Reference Def: 3.1 - 3
 Test VectorDouble: [23.1 33.1 43.1]
-numeric
+numeric 
 Test VectorDouble Reference: [24.2 34.2 44.2]
 Test VectorDouble Reference: [24.2 34.2 44.2]
-numeric
+numeric 
 Test VectorDouble Pointer: [25.3 35.3 45.3]
-numeric
+numeric 
 Test VectorDouble: [26.3 36.3]
 Test VectorDouble Reference: [26.3 36.3]
 Test VectorDouble Pointer: [26.3 36.3]
 Test VectorDouble Reference Out: [26.3 36.3]
-_p_VectorNumTT_double_t
+_p_VectorNumTT_double_t 
 Test VectorDouble Reference Def: [2.1 3.1] - [4.1 5.1]
 Test VectorDouble Reference Def: [] - [4.1 5.1]
 Test VectorDouble Reference Def: [] - [4.1 5.1]
 Test VectorDouble Reference Def: [3.1] - [4.1 5.1]
 Test VectorDouble Reference Def: [3.1] - [4.1 5.1]
+Test VectorDouble Pointer Def: []
+Test VectorDouble Pointer Def: [4 5]
+_varVectorDoublePtr: [4 5]
 Test VectorVectorDouble: [[23.1 33.1 43.1] [53.1 63.1] [73.1 83.1 93.1]]
-list
+list 
 Test VectorVectorDouble Reference: [[24.2 34.2 44.2] [54.2 64.2] [74.2 84.2 94.2]]
 Test VectorVectorDouble Reference: [[24.2 34.2 44.2] [54.2 64.2] [74.2 84.2 94.2]]
-list
+list 
 Test VectorVectorDouble Pointer: [[25.3 35.3 45.3] [55.3 65.3] [75.3 85.3 95.3]]
-list
+list 
 Test VectorVectorDouble: [[26.3 36.3] [56.3 66.3]]
 Test VectorVectorDouble Reference: [[26.3 36.3] [56.3 66.3]]
 Test VectorVectorDouble Pointer: [[26.3 36.3] [56.3 66.3]]
 Test VectorVectorDouble Reference Out: [[26.3 36.3] [56.3 66.3]]
 _p_VectorTT_VectorNumTT_double_t_t 
 Test String: Str12
-character
+character 
 Test String Reference: Str22
-character
+character 
 Test String Reference Def: Str2 - Str3
 Test String Reference Def: Str3 - Str3
 Test VectorString: [Str23 Str33 Str43]
-character
+character 
 Test VectorString Reference: [Str24 Str34 Str44]
 Test VectorString Reference: [Str24 Str34 Str44]
-character
+character 
 Test VectorString Pointer: [Str25 Str35 Str45]
-character
+character 
 Test VectorString: [Str26 Str36]
 Test VectorString Reference: [Str26 Str36]
 Test VectorString Reference: [Str26 Str36]
 Test VectorString Reference Out: [Str26 Str36]
-_p_VectorTT_std__string_t
+_p_VectorTT_std__string_t 
 Test double: -999.999
 [1] NA
 Test double: -999.999
@@ -104,9 +107,9 @@ Test int: -999
 Test int: -999
 [1] NA
 Test VectorDouble: [1.2 -999.999 3.3]
-[1] 1.2 NA 3.3
+[1] 1.2  NA 3.3
 Test VectorInt: [1 -999 3]
-[1] 1 NA 3
+[1]  1 NA  3
 Test VectorInt: []
 Test VectorInt: [101]
 Test VectorInt: [102]

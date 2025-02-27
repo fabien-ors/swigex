@@ -155,6 +155,9 @@ a.testVectorDoubleRefDef(())
 a.testVectorDoubleRefDef((3.1))
 a.testVectorDoubleRefDef(b=10.1)
 a.testVectorDoubleRefDef(b=(10.1,np.nan))
+a.testVectorDoublePtrDef()
+a.testVectorDoublePtrDef([4.,5.])
+a.printPtr()
 
 vvd = a.testVVectorDouble(np.array([[23.1,33.1,43.1],[53.1,63.1,73.1],[83.1,93.1,103.1]]))  # From numpy.array
 print(type(vvd))

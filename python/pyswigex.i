@@ -126,6 +126,7 @@
 
     // Test argument
     if (obj == NULL) return SWIG_TypeError;
+    if (obj == Py_None) return SWIG_NullReferenceError;
 
     // Conversion
     int myres = SWIG_OK;
