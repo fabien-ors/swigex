@@ -72,7 +72,7 @@ const VectorInt& TypeClass::testVectorIntRef(const VectorInt& a)
   return _varVectorInt;
 }
 
-const VectorInt* TypeClass::testVectorIntPtr(const VectorInt* a)
+const VectorInt* TypeClass::testVectorIntPtr(const VectorIntShrPtr& a)
 {
   _varVectorInt = *a;
   std::cout << "Test VectorInt Pointer: " << *a << std::endl;
@@ -171,9 +171,10 @@ const VectorDouble& TypeClass::testVectorDoubleRef(const VectorDouble& a)
   return _varVectorDouble;
 }
 
-const VectorDouble* TypeClass::testVectorDoublePtr(const VectorDouble* a)
+const VectorDouble* TypeClass::testVectorDoublePtr(const VectorDoubleShrPtr& a)
 {
   _varVectorDouble = *a;
+  _varVectorDoublePtr = a;
   std::cout << "Test VectorDouble Pointer: " << *a << std::endl;
   return &_varVectorDouble;
 }
@@ -190,7 +191,7 @@ void TypeClass::testVectorDoubleRefDef(const VectorDouble& a, const VectorDouble
   std::cout << "Test VectorDouble Reference Def: " << a << " - " << b << std::endl;
 }
 
-void TypeClass::testVectorDoublePtrDef(const VectorDouble* a)
+void TypeClass::testVectorDoublePtrDef(const VectorDoubleShrPtr& a)
 {
   if (a == nullptr) 
     _varVectorDouble.clear();
@@ -280,7 +281,7 @@ const VectorString& TypeClass::testVectorStringRef(const VectorString& a)
   return _varVectorString;
 }
 
-const VectorString* TypeClass::testVectorStringPtr(const VectorString* a)
+const VectorString* TypeClass::testVectorStringPtr(const VectorStrShrPtr& a)
 {
   _varVectorString = *a;
   std::cout << "Test VectorString Pointer: " << *a << std::endl;

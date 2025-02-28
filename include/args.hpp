@@ -7,6 +7,10 @@
 #include "VectorNumT.hpp"
 
 
+using VectorDoubleShrPtr = std::shared_ptr<VectorDouble>;
+using VectorIntShrPtr    = std::shared_ptr<VectorInt>;
+using VectorStrShrPtr    = std::shared_ptr<VectorString>;
+
 class SWIGEX_EXPORT TypeClass
 {
 public:
@@ -24,7 +28,7 @@ public:
 
   VectorInt testVectorInt(VectorInt a);                                                //   OK        OK
   const VectorInt& testVectorIntRef(const VectorInt& a);                               //   OK        OK
-  const VectorInt* testVectorIntPtr(const VectorInt* a);                               //   OK        OK
+  const VectorInt* testVectorIntPtr(const VectorIntShrPtr& a);                         //   OK        OK
   void testVectorIntRefOut(VectorInt& a) const;                                        //   OK        OK
   void testVectorIntRefDef(const VectorInt& a = VectorInt({2,3}),                      //   OK        OK
                            const VectorInt& b = VectorInt({4,5}));
@@ -46,11 +50,11 @@ public:
 
   VectorDouble testVectorDouble(VectorDouble a);                                       //   OK        OK
   const VectorDouble& testVectorDoubleRef(const VectorDouble& a);                      //   OK        OK
-  const VectorDouble* testVectorDoublePtr(const VectorDouble* a);                      //   OK        OK
+  const VectorDouble* testVectorDoublePtr(const VectorDoubleShrPtr& a);                //   OK        OK
   void testVectorDoubleRefOut(VectorDouble& a) const;                                  //   OK        OK
   void testVectorDoubleRefDef(const VectorDouble& a = VectorDouble({2.1,3.1}),         //   OK        OK
                               const VectorDouble& b = VectorDouble({4.1,5.1}));
-  void testVectorDoublePtrDef(const VectorDouble* a = nullptr);
+  void testVectorDoublePtrDef(const VectorDoubleShrPtr& a = {});
 
   VectorVectorDouble testVVectorDouble(VectorVectorDouble a);                          //   OK        OK
   const VectorVectorDouble& testVVectorDoubleRef(const VectorVectorDouble& a);         //   OK        OK
@@ -69,7 +73,7 @@ public:
 
   VectorString testVectorString(VectorString a);                                       //   OK        OK
   const VectorString& testVectorStringRef(const VectorString& a);                      //   OK        OK
-  const VectorString* testVectorStringPtr(const VectorString* a);                      //   OK        OK
+  const VectorString* testVectorStringPtr(const VectorStrShrPtr& a); //   OK OK
   void testVectorStringRefOut(VectorString& a) const;                                  //   OK        OK
   void testVectorStringRefDef(const VectorString& a =                                  //   ## NOK    OK
                                     VectorString({"Str4","Str5"}),
@@ -92,5 +96,5 @@ private:
   VectorDouble       _varVectorDouble;
   VectorVectorDouble _varVVectorDouble;
   VectorString       _varVectorString;
-  const VectorDouble*      _varVectorDoublePtr;
+  VectorDoubleShrPtr _varVectorDoublePtr;
 };

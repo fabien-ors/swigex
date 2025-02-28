@@ -107,10 +107,8 @@
 }
 
 %typemap(in, fragment="ToCpp") const VectorInt&    (void *argp, VectorInt vec),
-                               const VectorInt*    (void *argp, VectorInt vec),
                                const VectorDouble& (void *argp, VectorDouble vec),
-                               const VectorString& (void *argp, VectorString vec),
-                               const VectorString* (void *argp, VectorString vec)
+                               const VectorString& (void *argp, VectorString vec)
 {
   // Try to convert from any target language vector
   int errcode = vectorToCpp($input, vec);
@@ -141,30 +139,35 @@
   }
 }
 
-%typemap(in, fragment="ToCpp") const VectorDouble* (void *argp)
+%typemap(in, fragment="ToCpp")
+const std::shared_ptr<VectorDouble>& (void *argp, std::shared_ptr<VectorDouble> vec),
+const std::shared_ptr<VectorInt>& (void *argp, std::shared_ptr<VectorInt> vec),
+const std::shared_ptr<VectorString>& (void *argp, std::shared_ptr<VectorString> vec)
 {
   // Try to convert from any target language vector
-  // TODO: Attention on cree une fuite memoire volontairement
-  // (seule maniere de pereniser le pointeur).
-  // auto vec = std::make_shared<VectorDouble>(); A ameliorer
-  VectorDouble* vec = new VectorDouble();
+  using T = decltype(vec)::element_type;
+  vec = std::make_shared<T>();
   int errcode = vectorToCpp($input, *vec);
   if (errcode == SWIG_NullReferenceError)
   {
-    $1 = nullptr;
+    $1 = &vec;
   }
   else if (!SWIG_IsOK(errcode))
   {
     try
     {
       // Try direct conversion of Vectors by reference/pointer (see swigtypes.swg)
-      errcode = SWIG_ConvertPtr($input, &argp, $descriptor, %convertptr_flags);
+      errcode = SWIG_ConvertPtr($input, &argp, $descriptor(VectorT *), %convertptr_flags);
       if (SWIG_IsOK(errcode))
       {
         if (!argp) {
           %argument_nullref("$type", $symname, $argnum);
         }
-        $1 = %reinterpret_cast(argp, $ltype);
+        *vec = *%static_cast(argp, T *);
+        if(!vec->valid()) {
+          %argument_fail(SWIG_TypeError, "$type", $symname, $argnum);
+        }
+        $1 = &vec;
       }
       else {
         %argument_fail(errcode, "$type", $symname, $argnum);
@@ -176,7 +179,7 @@
     }
   }
   else {
-    $1 = vec;
+    $1 = &vec;
   }
 }
 

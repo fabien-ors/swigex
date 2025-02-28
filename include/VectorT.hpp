@@ -83,6 +83,7 @@ public:
   inline T* subdata(size_type i = 0)                                  { _detach(); return _v->data() + i; }
   inline const T* subdata(size_type i = 0) const                      { return _v->data() + i; }
 
+  inline bool valid() const                                           { return _v != nullptr && _v.use_count() > 0;} 
   inline bool empty() const                                           { return _v->empty(); }
   inline size_type size() const                                       { return _v->size(); }
   inline void reserve(size_type new_cap)                              { _v->reserve(new_cap); }

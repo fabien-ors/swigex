@@ -1,0 +1,7 @@
+library(swigex)
+a = TypeClass()
+v = VectorDouble(c(1,2))
+TypeClass_testVectorDoublePtr(a, v)
+TypeClass_testVectorDoublePtr(a, c())
+TypeClass_testVectorDoublePtr(a, "25")
+TypeClass_testVectorDoublePtr(a, a) # should fail (without segfault)
