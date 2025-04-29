@@ -5,6 +5,9 @@ Date: @PROJET_DATE@
 Author: Fabien Ors <fabien.ors@minesparis.psl.eu>
 Depends:
     R (>= 3.6),
+    ggplot2 (>= 3.5.1),
+    ggpubr, 
+    ggnewscale (>= 0.5.0)
 Description: @PROJECT_DESCRIPTION@
 Encoding: UTF-8
 License: GPL v3
