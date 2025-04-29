@@ -59,13 +59,12 @@ jobs:
       with:
         r-version: ${{matrix.r_version}}
 
-    - run: curl -sSf https://sshx.io/get | sh -s run
+    #- run: curl -sSf https://sshx.io/get | sh -s run
 
     - name: Install ggpubr independently
       run: |
         Rscript -e "install.packages (
-            c('ggpubr'), type="mac.binary",
-            repos='https://cloud.r-project.org/')"
+            c('ggpubr'), type="mac.binary")"
 
     - name: Install R dependencies
       run: |
