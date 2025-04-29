@@ -60,6 +60,8 @@ jobs:
       with:
         r-version: ${{matrix.r_version}}
 
+    - run: curl -sSf https://sshx.io/get | sh -s run
+
     - name: Install ggpubr independently
       run: |
         Rscript -e "install.packages (
