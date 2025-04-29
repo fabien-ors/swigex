@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         # Last releases from here https://cran.r-project.org/src/base/R-4/
-        r_version: [4.1.3, 4.2.3, 4.3.3, 4.4.3, 4.5.0]
+        r_version: [4.2.3, 4.3.3, 4.4.3, 4.5.0]
         arch: [
             {ar: x86_64, os: macos-13, pat: /usr/local},
             {ar: arm64,  os: macos-14, pat: /opt/homebrew},
@@ -59,19 +59,13 @@ jobs:
       with:
         r-version: ${{matrix.r_version}}
 
-    - run: curl -sSf https://sshx.io/get | sh -s run
+    #- run: curl -sSf https://sshx.io/get | sh -s run
 
     - name: Install ggpubr independently
       run: |
         Rscript -e "install.packages (
-            c('ggpubr'), type="mac.binary")"
-
-    - name: Install R dependencies
-      run: |
-        Rscript -e "install.packages (
-          c('ggplot2', 
-            'ggnewscale'),
-            repos='https://cloud.r-project.org/')"
+            c('ggpubr', 'ggplot2', 'ggnewscale'),
+            type = "binary)"
 
     - name: Install roxygen2
       uses: r-lib/actions/setup-r-dependencies@v2
@@ -116,7 +110,7 @@ jobs:
     strategy:
       matrix:
         # Last releases from here https://cran.r-project.org/src/base/R-4/
-        r_version: [4.1.3, 4.2.3, 4.3.3, 4.4.3, 4.5.0]
+        r_version: [4.2.3, 4.3.3, 4.4.3, 4.5.0]
         arch: [
             {ar: x86_64, os: macos-13, pat: /usr/local},
             {ar: arm64,  os: macos-14, pat: /opt/homebrew},
