@@ -59,11 +59,16 @@ jobs:
       with:
         r-version: ${{matrix.r_version}}
 
+    - name: Install ggpubr independently
+      run: |
+        Rscript -e "install.packages (
+            c('ggpubr'),
+            repos='https://cloud.r-project.org/')"
+
     - name: Install R dependencies
       run: |
         Rscript -e "install.packages (
           c('ggplot2', 
-            'ggpubr', 
             'ggnewscale'),
             repos='https://cloud.r-project.org/')"
 
