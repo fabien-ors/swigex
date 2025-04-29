@@ -42,7 +42,15 @@ jobs:
     - name: Fix dubious ownership
       run: |
         git config --global --add safe.directory $GITHUB_WORKSPACE
-        
+
+    - name: Install R dependencies
+      run: |
+        Rscript -e "install.packages (
+          c('ggplot2', 
+            'ggpubr', 
+            'ggnewscale'),
+            repos='https://cloud.r-project.org/')"
+
     - name : Configure build directory
       run : |
         cmake \
