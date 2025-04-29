@@ -64,7 +64,7 @@ jobs:
     - name: Install ggpubr independently
       run: |
         Rscript -e "install.packages (
-            c('ggpubr'), type="mac.binary"
+            c('ggpubr'), type="mac.binary",
             repos='https://cloud.r-project.org/')"
 
     - name: Install R dependencies
