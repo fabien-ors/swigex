@@ -1,4 +1,4 @@
-library(swigex)
+suppressWarnings(suppressMessages(library(swigex)))
 
 pa = ParentBase()
 invisible(showHello(pa))

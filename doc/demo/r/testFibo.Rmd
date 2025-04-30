@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r load_library}
-library(swigex)
+suppressWarnings(suppressMessages(library(swigex)))
 ```
 
 ```{r first display}
