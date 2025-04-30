@@ -46,6 +46,10 @@ jobs:
     - name: Install dependencies
       run: |
         dnf update -y
+        dnf install -y gdal-devel
+        dnf install -y proj-devel
+        dnf install -y geos-devel
+        dnf install -y sqlite-devel
         dnf install -y udunits2-devel
 
     - name: Install R dependencies
@@ -95,6 +99,10 @@ jobs:
     - name: Install dependencies
       run: |
         dnf update -y
+        dnf install -y gdal-devel
+        dnf install -y proj-devel
+        dnf install -y geos-devel
+        dnf install -y sqlite-devel
         dnf install -y udunits2-devel
 
     - name: Install R dependencies
