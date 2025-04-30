@@ -1,4 +1,4 @@
-suppressWarnings(suppressMessages(library(swigex)))library(swigex)
+suppressWarnings(suppressMessages(library(swigex)))
 
 a = TypeClass()
 i = a$testInt(12)
