@@ -64,8 +64,8 @@ jobs:
       run: |
         mkdir -P ~/.R
         echo "FC      = /usr/local/bin/gfortran" >> ~/.R/Makevars
-        echo "F77     = /usr/local/bin/gfortran >> ~/.R/Makevars
-        echo "FLIBS   = -L/usr/local/bin/gfortran/lib >> ~/.R/Makevars
+        echo "F77     = /usr/local/bin/gfortran" >> ~/.R/Makevars
+        echo "FLIBS   = -L/usr/local/bin/gfortran/lib" >> ~/.R/Makevars
 
     #- run: curl -sSf https://sshx.io/get | sh -s run
 
@@ -75,7 +75,7 @@ jobs:
     #        c('ggpubr', 'ggplot2', 'ggnewscale'),
     #        type = 'both')"
 
-    - name: Install roxygen2
+    - name: Install R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
         packages: roxygen2, pkgbuild, ggpubr, ggplot2, ggnewscale
@@ -136,7 +136,7 @@ jobs:
       with:
         name: macos-r-package-${{matrix.arch.os}}-${{matrix.r_version}}
 
-    - name: Install macOS dependencies
+    - name: Install dependencies
       run: brew install llvm
 
     - name: Setup R Version
