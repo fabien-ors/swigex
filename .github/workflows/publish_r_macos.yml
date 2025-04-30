@@ -67,14 +67,6 @@ jobs:
         echo "F77     = /usr/local/bin/gfortran" >> ~/.R/Makevars
         echo "FLIBS   = -L/usr/local/bin/gfortran/lib" >> ~/.R/Makevars
 
-    #- run: curl -sSf https://sshx.io/get | sh -s run
-
-    #- name: Install ggpubr independently
-    #  run: |
-    #    Rscript -e "install.packages (
-    #        c('ggpubr', 'ggplot2', 'ggnewscale'),
-    #        type = 'both')"
-
     - name: Install R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
@@ -144,13 +136,19 @@ jobs:
       with:
         r-version: ${{matrix.r_version}}
 
-    - name: Install R dependencies
+    # https://stackoverflow.com/questions/69639782/installing-gfortran-on-macbook-with-apple-m1-chip-for-use-in-r
+    - name: Fix gfortran path for R
       run: |
-        Rscript -e "install.packages (
-          c('ggplot2', 
-            'ggpubr', 
-            'ggnewscale'),
-            repos='https://cloud.r-project.org/')"
+        mkdir -p ~/.R
+        echo "FC      = /usr/local/bin/gfortran" >> ~/.R/Makevars
+        echo "F77     = /usr/local/bin/gfortran" >> ~/.R/Makevars
+        echo "FLIBS   = -L/usr/local/bin/gfortran/lib" >> ~/.R/Makevars
+
+    - name: Install R dependencies
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        packages: ggpubr, ggplot2, ggnewscale
+        install-pandoc: false
 
     - name: Install R package
       run: Rscript -e "install.packages(\"$(ls *.tgz)\", repos=NULL, type='source')"
