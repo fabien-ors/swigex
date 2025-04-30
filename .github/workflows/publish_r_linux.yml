@@ -43,20 +43,9 @@ jobs:
       run: |
         git config --global --add safe.directory $GITHUB_WORKSPACE
 
-    - name: Install dependencies
-      run: |
-        dnf update -y
-        dnf install -y gdal-devel
-        dnf install -y proj-devel
-        dnf install -y geos-devel
-        dnf install -y sqlite-devel
-        dnf install -y udunits2-devel
-
+    # Do not use r-lib/actions/setup-r-dependencies
     - name: Install R dependencies
-      uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        packages: ggpubr, ggplot2, ggnewscale
-        install-pandoc: false
+      run: Rscript -e "install.packages (c('ggplot2', 'ggpubr', 'ggnewscale'))"
 
     - name : Configure build directory
       run : |
@@ -96,20 +85,9 @@ jobs:
       with:
         name: linux-r-package
 
-    - name: Install dependencies
-      run: |
-        dnf update -y
-        dnf install -y gdal-devel
-        dnf install -y proj-devel
-        dnf install -y geos-devel
-        dnf install -y sqlite-devel
-        dnf install -y udunits2-devel
-
+    # Do not use r-lib/actions/setup-r-dependencies
     - name: Install R dependencies
-      uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        packages: ggpubr, ggplot2, ggnewscale
-        install-pandoc: false
+      run: Rscript -e "install.packages (c('ggplot2', 'ggpubr', 'ggnewscale'))"
             
     - name: Install R package
       run: Rscript -e "install.packages(\"$(ls *.tar.gz)\", repos=NULL, type='source')"
