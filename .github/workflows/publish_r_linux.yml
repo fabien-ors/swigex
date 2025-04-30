@@ -45,7 +45,8 @@ jobs:
 
     # Do not use r-lib/actions/setup-r-dependencies
     - name: Install R dependencies
-      run: Rscript -e "install.packages (c('ggplot2', 'ggpubr', 'ggnewscale'))"
+      run: Rscript -e "install.packages (c('ggplot2', 'ggpubr', 'ggnewscale'),
+                                         repos='https://cran.rstudio.com/')"
 
     - name : Configure build directory
       run : |
@@ -87,7 +88,8 @@ jobs:
 
     # Do not use r-lib/actions/setup-r-dependencies
     - name: Install R dependencies
-      run: Rscript -e "install.packages (c('ggplot2', 'ggpubr', 'ggnewscale'))"
+      run: Rscript -e "install.packages (c('ggplot2', 'ggpubr', 'ggnewscale'),
+                                         repos='https://cran.rstudio.com/')"
             
     - name: Install R package
       run: Rscript -e "install.packages(\"$(ls *.tar.gz)\", repos=NULL, type='source')"
