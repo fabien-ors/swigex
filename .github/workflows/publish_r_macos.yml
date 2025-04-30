@@ -70,7 +70,7 @@ jobs:
     - name: Install R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        packages: roxygen2, pkgbuild, ggpubr, ggplot2, ggnewscale
+        packages: ggpubr, ggplot2, ggnewscale, roxygen2, pkgbuild
         install-pandoc: false
 
     - name: Install the customized SWIG from source
@@ -135,14 +135,6 @@ jobs:
       uses: r-lib/actions/setup-r@v2
       with:
         r-version: ${{matrix.r_version}}
-
-    # https://stackoverflow.com/questions/69639782/installing-gfortran-on-macbook-with-apple-m1-chip-for-use-in-r
-    - name: Fix gfortran path for R
-      run: |
-        mkdir -p ~/.R
-        echo "FC      = /usr/local/bin/gfortran" >> ~/.R/Makevars
-        echo "F77     = /usr/local/bin/gfortran" >> ~/.R/Makevars
-        echo "FLIBS   = -L/usr/local/bin/gfortran/lib" >> ~/.R/Makevars
 
     - name: Install R dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
