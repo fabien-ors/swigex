@@ -44,7 +44,13 @@ project(swigex
         DESCRIPTION  "C++ library and SWIG wrappers (R & Python)"
         HOMEPAGE_URL "https://github.com/fabien-ors/swigex"
         LANGUAGES    C CXX) # Enable C language for third party libraries
-#set (PROJECT_VERSION 0.2.5a1)
+#set (PROJECT_VERSION_SUFFIX )   # Release
+#set (PROJECT_VERSION_SUFFIX a1)  # Alpha1
+#set (PROJECT_VERSION_SUFFIX b1)  # Beta1
+set (PROJECT_VERSION_SUFFIX rc1) # Release Candidate1
+
+# Build the full version
+set (PROJECT_FULL_VERSION "${PROJECT_VERSION}${PROJECT_VERSION_SUFFIX}")
 
 ####################################################
 ## CONFIGURATION

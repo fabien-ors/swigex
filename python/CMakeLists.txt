@@ -16,6 +16,7 @@ string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)"
   Python3_NumPy_VERSION_MATCH ${Python3_NumPy_VERSION})
 set(Python3_NumPy_VERSION_MAJOR ${CMAKE_MATCH_1})
 math(EXPR Python3_NumPy_NEXT_MAJOR "${Python3_NumPy_VERSION_MAJOR} + 1")
+message(STATUS "Found Numpy Version ${Python3_NumPy_VERSION} in ${Python3_NumPy_INCLUDE_DIRS}")
 
 # Look for SWIG 4 [No need for customized swig]
 find_package(SWIG 4.0 REQUIRED)
@@ -201,14 +202,23 @@ file(GENERATE
 ######################################
 # INSTALLATION
 
+find_program(UV NAMES uv REQUIRED DOC "Python package and project manager")
+
 # Add a custom target for python package installation
-# TODO: Do also installation each time README and below files are modified
+# TODO: Do also installation each time setup.py.in or README.md is modified
 add_custom_target(python_install
-  COMMAND ${Python3_EXECUTABLE} -m pip install ${PYTHON_PACKAGE_ROOT_FOLDER}
+  COMMAND ${UV} pip install ${PYTHON_PACKAGE_ROOT_FOLDER}
   COMMENT "Installing python package"
-  VERBATIM
 )
 
 # Tell to CMake that python package must be built before installation
 add_dependencies(python_install python_build)
 
+if(NOT DEFINED ENV{VIRTUAL_ENV})
+  add_custom_target(python_create_venv
+    COMMAND ${UV} venv
+    COMMENT "Creating a new venv with uv"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  )
+  add_dependencies(python_install python_create_venv)
+endif()

@@ -2,6 +2,7 @@
 
 /* Version and date */
 
-#define SWIGEX_RELEASE "@swigex_VERSION@"
-#define SWIGEX_DATE    "@swigex_DATE@"
-#define SWIGEX_COMMIT  "@swigex_COMMIT@"
+#define SWIGEX_RELEASE         "@swigex_VERSION@"
+#define SWIGEX_DATE            "@swigex_DATE@"
+#define SWIGEX_COMMIT          "@swigex_COMMIT@"
+#define SWIGEX_FULL_VERSION    "@PROJECT_FULL_VERSION@"

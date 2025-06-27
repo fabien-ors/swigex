@@ -84,7 +84,7 @@ Fibo::Fibo(int n, const String& title)
   {
     std::stringstream sstr;
     sstr << DEFAULT_TITLE << " ("
-         << SWIGEX_RELEASE << " - " << SWIGEX_DATE << ")";
+         << SWIGEX_FULL_VERSION <<" - " << SWIGEX_DATE << ")";
     _title = sstr.str();
   }
 }

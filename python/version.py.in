@@ -1,2 +1,2 @@
-__version__ = "@PROJECT_VERSION@"
+__version__ = "@PROJECT_FULL_VERSION@"
 __author__ = "Fabien Ors"

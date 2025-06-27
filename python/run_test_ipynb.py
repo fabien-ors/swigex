@@ -7,7 +7,6 @@ import re
 # - executes a jupyter notebook test script (argv[1]) 
 # - converts it into a file saved in the given directory (argv[2]).
 # - according to the format [asciidoc, html, pdf] (argv[3])
-python_exe = os.path.realpath(sys.executable)
 test_script = sys.argv[1]
 out_dir = sys.argv[2]
 test_name = os.path.splitext(os.path.basename(test_script))[0] # No extension
@@ -84,7 +83,7 @@ if (out_type == "asciidoc"):
     # Remove images in base64 included by MD files
     # data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAYAA........
     notebook_node = re.sub(r".*data:image/png;base64,.*", "data:image/png;base64,XXX", notebook_node)
-
+    
     # Remove all lines coming from data downloading (no need anymore as wget -q):
     # --2023-07-28 15:20:09--  https://soft.minesparis.psl.eu/gstlearn/data/Scotland/Scotland_Temperatures.NF
     # Résolution de soft.minesparis.psl.eu (soft.minesparis.psl.eu)… 51.83.45.127
@@ -107,9 +106,9 @@ if (out_type == "asciidoc"):
     notebook_node = re.sub(r".*CholmodTypeConversionWarning", "XXX: CholmodTypeConversionWarning", notebook_node)
     
     # Remove panda frame decoration that can vary according the version/OS i.e. :
-    notebook_node = re.sub(r"\|====+", "|===", notebook_node)
+    notebook_node = re.sub(r"\|=+", "|===", notebook_node)
     notebook_node = re.sub(r"\[.*options=\"header\"\,]", "", notebook_node)
-
+    
     # Remove pip install output
     notebook_node = re.sub(r"\[notice\].*", "#NO_DIFF#XXX", notebook_node)
     notebook_node = re.sub(r".*site-packages is not writeable", "#NO_DIFF#XXX", notebook_node)
