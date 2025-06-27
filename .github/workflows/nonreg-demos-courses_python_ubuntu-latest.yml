@@ -34,21 +34,22 @@ jobs:
         sudo rm /etc/apt/sources.list.d/microsoft-prod.list
         sudo apt-get update
         sudo apt-get install -yq pandoc
-          
-    - name: Setup Python Version
-      uses: actions/setup-python@v5
+
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v6
       with:
         python-version: ${{env.PYTHON_VERSION}}
+        activate-environment: true
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install numpy
-        python -m pip install jupyter
-        python -m pip install notebook==6.1.6
-        python -m pip install matplotlib
-        python -m pip install plotly
-        python -m pip install gstlearn
+        uv pip install --upgrade pip
+        uv pip install numpy
+        uv pip install jupyter
+        uv pip install notebook==6.1.6
+        uv pip install matplotlib
+        uv pip install plotly
+        uv pip install gstlearn
 
     - name: Configure build directory for python package
       run: |
