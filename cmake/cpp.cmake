@@ -38,7 +38,7 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/stdoutredirect.cpp)
 
 # Generation folder (into Release or Debug)
-if (NOT IS_MULTI_CONFIG)
+if (NOT IS_MULTI_CONFIG AND NOT WIN32)
   cmake_path(APPEND CMAKE_CURRENT_BINARY_DIR ${CMAKE_BUILD_TYPE} OUTPUT_VARIABLE CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   cmake_path(APPEND CMAKE_CURRENT_BINARY_DIR ${CMAKE_BUILD_TYPE} OUTPUT_VARIABLE CMAKE_LIBRARY_OUTPUT_DIRECTORY)
   cmake_path(APPEND CMAKE_CURRENT_BINARY_DIR ${CMAKE_BUILD_TYPE} OUTPUT_VARIABLE CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -77,9 +77,18 @@ foreach(FLAVOR ${FLAVORS})
 
   # Rename the output library name
   set_target_properties(${FLAVOR} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+  # append a 'd' to the output file name of the debug build targets
+  set_target_properties(${FLAVOR} PROPERTIES DEBUG_POSTFIX "d")
   
   # Set library version
   set_target_properties(${FLAVOR} PROPERTIES VERSION ${PROJECT_FULL_VERSION})
+
+  # Build a cmake file to be imported by library users
+  export(TARGETS ${FLAVOR}
+         NAMESPACE ${PROJECT_NAME}::
+         FILE ${SWIGEX_CMAKE_FILE}
+         APPEND)
+         
 endforeach(FLAVOR ${FLAVORS})
 ############################## End loop on flavors
 

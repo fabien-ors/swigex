@@ -45,7 +45,6 @@ jobs:
 
     - name: Install python dependencies
       run: |
-        uv pip install --upgrade pip
         uv pip install numpy
 
     - name: Setup R Version

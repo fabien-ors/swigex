@@ -99,6 +99,9 @@ message(STATUS "BUILD_PYTHON="  ${BUILD_PYTHON})
 message(STATUS "BUILD_R="       ${BUILD_R})
 message(STATUS "BUILD_DOC="     ${BUILD_DOC})
 
+# Create swigex cmake file path in the build tree
+cmake_path(APPEND SWIGEX_CMAKE_FILE ${PROJECT_BINARY_DIR} "swigex.cmake")
+
 ####################################################
 ## BUILD & INSTALL
 

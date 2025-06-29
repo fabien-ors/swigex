@@ -1,6 +1,8 @@
 # Default GNU installed directory names
 include(GNUInstallDirs)
 
+include(CMakePackageConfigHelpers)
+
 ####################################################
 ## INSTALLATION
 
@@ -23,6 +25,7 @@ endif()
 target_include_directories(shared PUBLIC
   # Installed includes are made PUBLIC for client who links the shared library
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}/${PROJECT_NAME}>"
 )
 
 # Install the shared library
@@ -31,23 +34,24 @@ install(
   EXPORT ${PROJECT_NAME}_corelibs
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib
+  ARCHIVE DESTINATION lib
 )
 
 # Install the includes
 install(
   DIRECTORY   ${INCLUDES}
-  DESTINATION include/${PROJECT_NAME}
+  DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}
 )
 
 # Install the export header file
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_export.hpp
-        DESTINATION include/${PROJECT_NAME}
+        DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}
 )
 
 # Install the version header file
 install(
   FILES ${PROJECT_BINARY_DIR}/version.h
-  DESTINATION include/${PROJECT_NAME}
+  DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}
 )
 
 # Install doxygen html directories (optional)
@@ -60,8 +64,21 @@ install(
 # Export the shared library cmake configuration (See above for corelibs definition)
 install(
   EXPORT ${PROJECT_NAME}_corelibs
-  FILE ${PROJECT_NAME}Config.cmake
+  FILE ${PROJECT_NAME}Targets.cmake
   NAMESPACE ${PROJECT_NAME}::
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+)
+
+# Create the Config.cmake file
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
+)
+
+# Install the Config.cmake file
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake
 )
 

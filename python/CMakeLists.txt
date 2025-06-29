@@ -90,6 +90,12 @@ set(CMAKE_SWIG_FLAGS -keyword) # Use -keyword option to activate kwargs
 # Note: Cannot use -doxygen feature because all documentation is in C++ body files
 # Note: Use -E option for seeing SWIG preprocessor output
 
+# Forward C++ compile definitions to pyswigex.i
+set_property(
+  SOURCE ${SRC}
+  PROPERTY COMPILE_DEFINITIONS
+           $<TARGET_PROPERTY:${PROJECT_NAME}::shared,COMPILE_DEFINITIONS>)
+
 # SWIG target (generate wrapper & python script then build [so,pyd] library)
 swig_add_library(
   python_build
@@ -211,7 +217,7 @@ add_custom_target(python_install
   COMMENT "Installing python package"
 )
 
-# Tell to CMake that python package must be built before installation
+# Tell to CMake that python package must be built before installation [python_doc is optional]
 add_dependencies(python_install python_build)
 
 if(NOT DEFINED ENV{VIRTUAL_ENV})
