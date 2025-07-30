@@ -27,7 +27,7 @@ class SWIGEX_EXPORT AParent : public ICloneable
     virtual String getHello() const { return "Hello"; }
 
     // This class AParent is still pure abstract
-    //virtual ICloneable* clone() const override { return new AParent(); }
+    // ICloneable* clone() const override { return new AParent(); }
 };
 
 /**
@@ -39,9 +39,9 @@ class SWIGEX_EXPORT ChildOne : public AParent
     ChildOne() {};
     virtual ~ChildOne() {};
 
-    virtual String getHello() const override { return "ChildOne - Hello"; }
+    String getHello() const override { return "ChildOne - Hello"; }
 
-    //virtual ChildOne* clone() const override { return new ChildOne(); } // Override clone even if the return type is different
+    // ChildOne* clone() const override { return new ChildOne(); } // Override clone even if the return type is different
 };
 
 /// Global function for testing polymorphism

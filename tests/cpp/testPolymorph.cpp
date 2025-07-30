@@ -9,9 +9,9 @@ public:
   ChildTwo(): AParent() {}
   virtual ~ChildTwo() {}
 
-  virtual String getHello() const override { return "ChildTwo in C++ - Hello"; }
+  String getHello() const override { return "ChildTwo in C++ - Hello"; }
 
-  //virtual ICloneable* clone() const override { return new ChildTwo(); }
+  // ICloneable* clone() const override { return new ChildTwo(); }
 };
 
 int main()
