@@ -147,7 +147,7 @@
   // TODO: Attention on cree une fuite memoire volontairement
   // (seule maniere de pereniser le pointeur).
   // auto vec = std::make_shared<VectorDouble>(); A ameliorer
-  VectorDouble* vec = new VectorDouble();
+  auto* vec = new VectorDouble();
   int errcode = vectorToCpp($input, *vec);
   if (errcode == SWIG_NullReferenceError)
   {
