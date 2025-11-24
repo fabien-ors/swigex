@@ -1,4 +1,14 @@
 1 2 
 1.5 2.6 
 Mean=2.05
-Hey You
+Hey You 
+Matrix of integer
+                   Col1       Col2
+Row 1                1          3
+Row 2                2          4
+
+Matrix of double
+                   Col1       Col2
+Row 1            1.500      3.700
+Row 2            2.600      4.800
+
