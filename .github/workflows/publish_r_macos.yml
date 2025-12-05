@@ -38,14 +38,11 @@ jobs:
         # Last releases from here https://cran.r-project.org/src/base/R-4/
         r_version: [4.2.3, 4.3.3, 4.4.3, 4.5.2]
         arch: [
-            {ar: x86_64, os: macos-13, pat: /usr/local},
             {ar: arm64,  os: macos-14, pat: /opt/homebrew},
-            {ar: arm64,  os: macos-15, pat: /opt/homebrew}
+            {ar: arm64,  os: macos-15, pat: /opt/homebrew},
+            {ar: x86_64, os: macos-15-intel, pat: /usr/local},
+            {ar: arm64,  os: macos-26, pat: /opt/homebrew},
          ]
-        exclude:
-          - {arch: {os: macos-13}, r_version: 4.3.3}
-          - {arch: {os: macos-13}, r_version: 4.4.3}
-          - {arch: {os: macos-13}, r_version: 4.5.2}
 
     steps:
     - uses: actions/checkout@v4
@@ -62,11 +59,8 @@ jobs:
       with:
         r-version: ${{matrix.r_version}}
 
-    - name: Install R dependencies
-      uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        packages: roxygen2, pkgbuild
-        install-pandoc: false
+    - name: Install R dependencies (binary)
+      run: Rscript -e "install.packages (c('roxygen2', 'pkgbuild'), type='binary')"
 
     - name: Install the customized SWIG from source
       uses: fabien-ors/install-swig-unix-action@v1
@@ -119,14 +113,11 @@ jobs:
         # Last releases from here https://cran.r-project.org/src/base/R-4/
         r_version: [4.2.3, 4.3.3, 4.4.3, 4.5.2]
         arch: [
-            {ar: x86_64, os: macos-13, pat: /usr/local},
-            {ar: arm64,  os: macos-14, pat: /opt/homebrew},
-            {ar: arm64,  os: macos-15, pat: /opt/homebrew}
+            {ar: arm64,  os: macos-14},
+            {ar: arm64,  os: macos-15},
+            {ar: x86_64, os: macos-15-intel},
+            {ar: arm64,  os: macos-26},
          ]
-        exclude:
-          - {arch: {os: macos-13}, r_version: 4.3.3}
-          - {arch: {os: macos-13}, r_version: 4.4.3}
-          - {arch: {os: macos-13}, r_version: 4.5.2}
 
     steps:
     - uses: actions/checkout@v4
