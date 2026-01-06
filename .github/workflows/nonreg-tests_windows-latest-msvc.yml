@@ -54,7 +54,7 @@ jobs:
 
     - name: Install packages and execute non-regression tests
       run: |
-        cmake --build ${{env.BUILD_DIR}} --config ${{env.BUILD_TYPE}} --target check
+        cmake --build ${{env.BUILD_DIR}} --target check --config ${{env.BUILD_TYPE}}
 
     - name: Compress output logs
       if: success() || failure()
