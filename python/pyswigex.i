@@ -17,6 +17,7 @@
 %}
 %include numpy.i
 %init %{
+  // Use a leading '_' to prevent this: https://github.com/numpy/numpy/issues/30122
   _import_array(); // Mandatory for using PyArray_* functions
 %}
 
@@ -435,8 +436,8 @@ def isNaN(value):
   return np.isnan(value)
 
 
-## Add operator [] to VectorXXX R class [1-based index] ##
-## ---------------------------------------------------- ##
+## Add operator [] to VectorXXX class [0-based index] ##
+## -------------------------------------------------- ##
 
 def setitem(self, idx, item):
   if idx < 0 or idx >= self.length():
