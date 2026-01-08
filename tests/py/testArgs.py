@@ -28,6 +28,10 @@ vi = a.testVectorInt(np.array((23,33,43)))
 print(type(vi))
 if (vi[0] != 23 or vi[1] != 33 or vi[2] != 43) :
   print("Wrong VectorInt!")
+vi = np.atleast_2d(vi).T  # Convert to 2D 1-column array
+vi = a.testVectorInt(vi)
+if (vi[0] != 23 or vi[1] != 33 or vi[2] != 43) :
+  print("Wrong VectorInt as column!")
 vi = a.testVectorIntRef([24,34,44]) # From list
 vi = a.testVectorIntRef(vi) # From a numpy array returned by the C++ library
 print(type(vi))
@@ -131,6 +135,10 @@ vd = a.testVectorDouble([23.1,33.1,43.1]) # From list
 print(type(vd))
 if (vd[0] != 23.1 or vd[1] != 33.1 or vd[2] != 43.1) :
   print("Wrong VectorDouble!")
+vd = np.atleast_2d(vd).T  # Convert to 2D 1-column array
+vd = a.testVectorDouble(vd)
+if (vd[0] != 23.1 or vd[1] != 33.1 or vd[2] != 43.1) :
+  print("Wrong VectorDouble as column!")
 vd = a.testVectorDoubleRef(np.array([24.2,34.2,44.2])) # From numpy.array
 vd = a.testVectorDoubleRef(vd) # From numpy.array returned by the C++ library
 print(type(vd))
@@ -230,6 +238,10 @@ vs = a.testVectorString(np.array(("Str23","Str33","Str43"))) # From numpy.array
 print(type(vs))
 if (vs[0] != 'Str23' or vs[1] != 'Str33' or vs[2] != 'Str43') :
   print("Wrong VectorString!")
+vs = np.atleast_2d(vs).T  # Convert to 2D 1-column array
+vs = a.testVectorString(vs)
+if (vs[0] != 'Str23' or vs[1] != 'Str33' or vs[2] != 'Str43') :
+  print("Wrong VectorString as column!")
 vs = a.testVectorStringRef(["Str24","Str34","Str44"]) # From list
 vs = a.testVectorStringRef(vs) # From numpy.array returned by the C++ library
 print(type(vs))

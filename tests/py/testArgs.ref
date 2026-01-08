@@ -12,6 +12,7 @@ Test int Reference Def: 2 - 5
 Test int Reference Def: 2 - -999
 Test VectorInt: [23 33 43]
 <class 'numpy.ndarray'>
+Test VectorInt: [23 33 43]
 Test VectorInt Reference: [24 34 44]
 Test VectorInt Reference: [24 34 44]
 <class 'numpy.ndarray'>
@@ -68,6 +69,7 @@ Test Double Reference Def: 2 - 5.1
 Test Double Reference Def: 2 - -999.999
 Test VectorDouble: [23.1 33.1 43.1]
 <class 'numpy.ndarray'>
+Test VectorDouble: [23.1 33.1 43.1]
 Test VectorDouble Reference: [24.2 34.2 44.2]
 Test VectorDouble Reference: [24.2 34.2 44.2]
 <class 'numpy.ndarray'>
@@ -118,6 +120,7 @@ Test String Reference Def: Str2 - Str5
 Test String Reference Def: Str2 - 
 Test VectorString: [Str23 Str33 Str43]
 <class 'tuple'>
+Test VectorString: [Str23 Str33 Str43]
 Test VectorString Reference: [Str24 Str34 Str44]
 Test VectorString Reference: [Str24 Str34 Str44]
 <class 'tuple'>
