@@ -45,11 +45,11 @@ For a pre release:
 ### R Package
 From an R command prompt:
 
-    install.package("swigex", repos="https://soft.mines-paristech.fr/cran")
+    install.packages("swigex", repos="https://soft.mines-paristech.fr/cran")
 
 For a prerelease:
 
-    install.package("swigex", repos="https://soft.mines-paristech.fr/cran/prerelease")
+    install.packages("swigex", repos="https://soft.mines-paristech.fr/cran/prerelease")
 
 ## Usage
 This library implements a Fibonacci list C++ object exported to Python and R via SWIG using numerical vector class. Here is an example usage in Python:
