@@ -56,7 +56,7 @@ jobs:
         echo "HTML_FOLDER=${{env.BUILD_DIR}}/doxygen/html" >> "$GITHUB_ENV"
         echo "PROJECT_FULL_VERSION=${PROJECT_FULL_VERSION}" >> "$GITHUB_OUTPUT"
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       with:
         # This will become the folder name in the server
         name: doxygen
@@ -73,7 +73,7 @@ jobs:
       - env:
           PROJECT_FULL_VERSION: ${{needs.build.outputs.project_full_version}}
           
-        uses: fabien-ors/folder-publish-action@v4
+        uses: fabien-ors/folder-publish-action@v5
         with:
           host: ${{ secrets.CG_HOST }}
           username: ${{ secrets.CG_USR }}

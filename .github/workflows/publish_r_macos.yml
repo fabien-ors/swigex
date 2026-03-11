@@ -99,7 +99,7 @@ jobs:
       run: |
         cat ${{env.BUILD_DIR}}/r/${{env.CMAKE_BUILD_TYPE}}/create_doc.out
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       # Use specific artifact identifier for publishing all versions
       with:
         name: macos-r-package-${{matrix.arch.os}}-${{matrix.r_version}}
@@ -122,7 +122,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v7
       with:
         name: macos-r-package-${{matrix.arch.os}}-${{matrix.r_version}}
 
@@ -152,7 +152,7 @@ jobs:
           CRAN_PATH: ${{needs.build.outputs.cran_path}}
 
         # Publish packages to our CRAN
-        uses: fabien-ors/cran-publish-action@v4
+        uses: fabien-ors/cran-publish-action@v5
         with:
           host: ${{secrets.CG_HOST}}
           username: ${{secrets.CG_USR}}
