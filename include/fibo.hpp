@@ -9,6 +9,14 @@ SWIGEX_EXPORT VectorInt fib(Id n);
 
 /**
  * Class which handles Fibonacci integers list
+ * 
+ * The following comment is for test purpose.
+ * 
+ * \link Fibo FiboClass \endlink
+ * 
+ * The distance between \f$ p1=(x_1,y_1) \f$ and \f$ p2=(x_2,y_2) \f$ is \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$
+ * 
+ * \remark This is a remark for test purpose.
  */
 class SWIGEX_EXPORT Fibo
 {
