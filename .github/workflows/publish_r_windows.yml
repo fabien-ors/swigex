@@ -28,8 +28,6 @@ env:
   BUILD_DIR : build
   CMAKE_GENERATOR : "MSYS Makefiles"
   SWIG_ROOT : ${{github.workspace}}\swig
-  DOXYGEN_ROOT : ${{github.workspace}}\doxygen
-  DOXYGEN_VERSION : "1.9.8"
 
 jobs:
 
@@ -64,10 +62,8 @@ jobs:
         install-pandoc: false
 
     - name: Install Doxygen under windows
-      uses: fabien-ors/install-doxygen-windows-action@v1
-      with:
-        doxygen-root: ${{env.DOXYGEN_ROOT}}
-        doxygen-version: ${{env.DOXYGEN_VERSION}}
+      run: |
+        choco install doxygen.install graphviz
 
     - name : Configure build directory
       run : |
