@@ -37,11 +37,10 @@ jobs:
       matrix:
         # Last releases from here https://cran.r-project.org/src/base/R-4/
         r_version: [4.2.3, 4.3.3, 4.4.3, 4.5.3, 4.6.0]
+        # Only one arm64 and one x86_64 Mac OS version are needed
         arch: [
-            {ar: arm64,  os: macos-14, pat: /opt/homebrew},
-            {ar: arm64,  os: macos-15, pat: /opt/homebrew},
             {ar: x86_64, os: macos-15-intel, pat: /usr/local},
-            {ar: arm64,  os: macos-26, pat: /opt/homebrew},
+            {ar: arm64,  os: macos-14, pat: /opt/homebrew},
          ]
 
     steps:
@@ -78,9 +77,18 @@ jobs:
           -DBUILD_DOC=ON
 
     - name : Build the package and save generated file name in the environment
+      env :
+        OS_TYPE : ${{matrix.arch.os}}
       run : |
         cmake --build ${{env.BUILD_DIR}} --parallel 3 --target r_install
-        echo "MY_PKG=$(ls ${{env.BUILD_DIR}}/r/${{env.CMAKE_BUILD_TYPE}}/swigex_*.tgz)" >> "$GITHUB_ENV"
+        PKG_ARCHIVE=$(ls ${{env.BUILD_DIR}}/r/${{env.CMAKE_BUILD_TYPE}}/swigex_*.tgz)
+        echo "Archive file is $PKG_ARCHIVE and OS_TYPE is $OS_TYPE"
+        if [ "$OS_TYPE" = "macos-14" ]; then
+          tar -xzf $PKG_ARCHIVE
+          sed -i '' 's/darwin23/darwin20/g' swigex/DESCRIPTION
+          tar -czf $PKG_ARCHIVE swigex
+        fi
+        echo "MY_PKG=$PKG_ARCHIVE" >> "$GITHUB_ENV"
 
     - name: Define the CRAN path on our server
       id: define_cran_path
@@ -112,12 +120,11 @@ jobs:
       matrix:
         # Last releases from here https://cran.r-project.org/src/base/R-4/
         r_version: [4.2.3, 4.3.3, 4.4.3, 4.5.3, 4.6.0]
+        # Only one arm64 and one x86_64 Mac OS version are needed
         arch: [
-            {ar: arm64,  os: macos-14},
-            {ar: arm64,  os: macos-15},
             {ar: x86_64, os: macos-15-intel},
-            {ar: arm64,  os: macos-26},
-         ]
+            {ar: arm64,  os: macos-14},
+          ]
 
     steps:
     - uses: actions/checkout@v4

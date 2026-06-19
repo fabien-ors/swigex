@@ -45,7 +45,7 @@ jobs:
     - name: Fix dubious ownership
       run: |
         git config --global --add safe.directory $GITHUB_WORKSPACE
-        
+
     - name : Configure build directory
       run : |
         cmake \
@@ -108,10 +108,10 @@ jobs:
   publish:
     needs: test
     if: ${{inputs.dry_publish == false}}
-    
+
     # Only ubuntu can upload to CRAN easily (ssh)
     runs-on: ubuntu-latest
-    
+
     steps:
       - env:
           CRAN_PATH: ${{needs.build.outputs.cran_path}}

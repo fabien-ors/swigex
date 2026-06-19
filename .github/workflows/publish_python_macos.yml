@@ -33,18 +33,13 @@ jobs:
       matrix:
         # Python version
         python: [
-          # Double quote for version is needed otherwise 3.10 => 3.1
-            {py: "3.10"},
-            {py: "3.11"},
-            {py: "3.12"},
-            {py: "3.13"},
-            {py: "3.14"}
+            # Double quote for version is needed otherwise 3.10 => 3.1
+            {py: "3.10", tag: "cp310", abi-tag: "abi3"},
           ]
+        # Only one arm64 and one x86_64 Mac OS version are needed
         arch: [
-            {ar: arm64,  os: macos-14, pat: /opt/homebrew},
-            {ar: arm64,  os: macos-15, pat: /opt/homebrew},
             {ar: x86_64, os: macos-15-intel, pat: /usr/local},
-            {ar: arm64,  os: macos-26, pat: /opt/homebrew},
+            {ar: arm64,  os: macos-14, pat: /opt/homebrew},
           ]
 
     steps:
@@ -58,12 +53,12 @@ jobs:
     - name: Setup Python Version
       uses: actions/setup-python@v5
       with:
-        python-version: ${{matrix.python.py}}
+        python-version: ${{ matrix.python.py }}
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install numpy twine build uv
+        python -m pip install numpy twine build wheel uv
 
     - name : Configure build directory
       run : |
@@ -83,13 +78,21 @@ jobs:
         cd ${{env.BUILD_DIR}}/python/${{env.CMAKE_BUILD_TYPE}}
         # Note: wheel must be declared not pure (see setup.py)
         python -m build --wheel
+        python -m wheel tags --python-tag=${{matrix.python.tag}} --abi-tag=${{matrix.python.abi-tag}} dist/*.whl
+        rm dist/*${{matrix.python.tag}}-${{matrix.python.tag}}*.whl
+        if [ "${{matrix.arch.os}}" == "macos-15-intel" ] && [ $(ls dist/*universal2.whl | wc -l) -gt 0 ]; then
+          # Fix wheel platform tag for x86_64 macOS
+          WHEEL_FILE=$(ls dist/*universal2.whl)
+          NEW_WHEEL_FILE=$(echo $WHEEL_FILE | sed 's/universal2/x86_64/')
+          mv $WHEEL_FILE $NEW_WHEEL_FILE
+        fi
         cd ../../..
         echo "MY_PKG=$(ls ${{env.BUILD_DIR}}/python/${{env.CMAKE_BUILD_TYPE}}/dist/*)" >> "$GITHUB_ENV"
 
     - uses: actions/upload-artifact@v6
       # Use specific artifact identifier for publishing all versions
       with:
-        name: macos-python-package-${{matrix.arch.os}}-${{matrix.python.py}}
+        name: macos-python-package-${{matrix.arch.os}}
         path: ${{env.MY_PKG}}
 
   test:
@@ -105,30 +108,31 @@ jobs:
             {py: "3.13"},
             {py: "3.14"}
           ]
+        # Only one arm64 and one x86_64 Mac OS version are needed
         arch: [
-            {ar: arm64,  os: macos-14},
-            {ar: arm64,  os: macos-15},
             {ar: x86_64, os: macos-15-intel},
-            {ar: arm64,  os: macos-26},
+            {ar: arm64,  os: macos-14},
           ]
+
 
     steps:
     - uses: actions/checkout@v4
 
     - uses: actions/download-artifact@v7
       with:
-        name: macos-python-package-${{matrix.arch.os}}-${{matrix.python.py}}
+        name: macos-python-package-${{matrix.arch.os}}
 
     - name: Setup Python Version
       uses: actions/setup-python@v5
       with:
-        python-version: ${{matrix.python.py}}
+        python-version: ${{ matrix.python.py }}
 
     - name: Install macOS dependencies
       run: brew install llvm
 
     - name: Install Python package
-      run: pip install ./$(ls *.whl)
+      run: |
+        pip install ./$(ls *.whl)
 
     - name: Test installed Python package
       run: |
