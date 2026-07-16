@@ -11,7 +11,7 @@
 #
 # Information:
 #  - print_version  Display project name, version and date
-# 
+#
 # C++ Library:
 #  - shared         Build shared library
 #  - static         Build static library
@@ -64,7 +64,7 @@
 ifeq ($(BUILD_DOC), 1)
   BUILD_DOC = ON
  else
-  BUILD_DOC = OFF 
+  BUILD_DOC = OFF
 endif
 
 ifeq ($(OS),Windows_NT)
@@ -199,9 +199,8 @@ build_demos: cmake-python-r
 
 .PHONY: clean clean_all
 
-clean: 
+clean:
 	@cmake --build $(BUILD_DIR) --target clean -- $(N_PROC_OPT)
 
 clean_all:
 	@rm -rf $(BUILD_DIR)
-

@@ -1,819 +1,754 @@
-#!/usr/bin/env python
-"""doxy2rd.py [options] index.xml pkg_dir
-
-Doxygen XML to R package documentation (Rd) converter.
-
-Converts Doxygen generated XML files into some files containing Rd
-documentation (used in R packages).
-
-index.xml is your doxygen generated XML file and pkg_dir is
-the root directory of your R package (in which the man directory will be filled).
-"""
-# The current version of this code is hosted on a github repository:
-#   https://github.com/fabien.ors/doxy2rd (DO NOT EXIST YET)
-#
-# This code is derivative work of the doxy2swig script from Prabhu Ramachandran & Michael Thon
-# which is available here:
-#   https://github.com/m7thon/doxy2swig
-#
-# Original Author: Prabhu Ramachandran & Michael Thon (June 2015)
-# Modified and adapted by: Fabien Ors (October 2023)
-# License: BSD style
-#
-# Changes:
-# October 2023 (Fabien Ors):  WORK IN PROGRESS !!!
-#   - Generate Rd files for R platform (no more docstring for Python) 
-#
-
-from xml.dom import minidom
+#!/usr/bin/env python3
+from enum import member
+import os
+from pathlib import Path
+import argparse
+import xml.etree.ElementTree as ET
 import re
-import textwrap
-import sys
-import os.path
-import optparse
+import csv
 
 
-def my_open_read(source):
-    if hasattr(source, "read"):
-        return source
-    else:
-        try:
-            return open(source, encoding='utf-8')
-        except TypeError:
-            return open(source)
+class Function:
+    def __init__(
+        self,
+        name="",
+        docType="",
+        alias="",
+        title="",
+        description="",
+        usage="",
+        arguments=None,
+        value="",
+        format="",
+        source="",
+        references="",
+        keyword="",
+        note="",
+        filename="",
+    ):
+        self.name = name
+        self.filename = filename or name
+        self.docType = docType
+        self.alias = alias
+        self.title = title
+        self.description = description
+        self.usage = usage
+        self.arguments = arguments or []
+        self.value = value
+        self.format = format
+        self.source = source
+        self.references = references
+        self.keyword = keyword
+        self.note = note
 
-def my_open_write(dest):
-    if hasattr(dest, "write"):
-        return dest
-    else:
-        try:
-            return open(dest, 'w', encoding='utf-8')
-        except TypeError:
-            return open(dest, 'w')
+    def to_rd(self):
+        lines = []
+        clean_name = (
+            self.name.replace("gstlrn::", "")
+            .replace("gstlrn_", "")
+            .replace("[]", "_brackets")
+        )
+        if clean_name:
+            lines.append(f"\\name{{{clean_name}}}")
+            lines.append(f"\\alias{{{clean_name}}}")
+        if self.docType:
+            lines.append(f"\\docType{{{self.docType}}}")
+        if self.title:
+            lines.append(
+                f"\\title{{{self.title.replace('gstlrn::', '').replace('gstlrn_', '').replace('::', '_')}}}"
+            )
+        if self.description:
+            lines.append("\\description{\n" + self.description + "\n}")
+        if self.usage:
+            lines.append("\\usage{\n" + self.usage + "\n}")
+        if self.arguments:
+            lines.append("\\arguments{")
+            for arg in self.arguments:
+                lines.append(
+                    f"  \\item{{{arg['name']}}}{{{arg.get('description', '')}}}"
+                )
+            lines.append("}")
+        if self.value:
+            lines.append("\\value{\n" + self.value + "\n}")
+        if self.format:
+            lines.append("\\format{\n" + self.format + "\n}")
+        if self.note:
+            lines.append("\\note{\n" + self.note + "\n}")
+        if self.source:
+            lines.append("\\source{\n" + self.source + "\n}")
+        if self.references:
+            lines.append("\\references{\n" + self.references + "\n}")
+        if self.keyword:
+            lines.append(f"\\keyword{{{self.keyword}}}")
+        return "\n".join(lines)
 
-# MARK: Text handling:
-def shift(txt, indent = '    ', prepend = ''):
-    """Return a list corresponding to the lines of text in the `txt` list
-    indented by `indent`. Prepend instead the string given in `prepend` to the
-    beginning of the first line. Note that if len(prepend) > len(indent), then
-    `prepend` will be truncated (doing better is tricky!). This preserves a 
-    special '' entry at the end of `txt` (see `do_para` for the meaning).
-    """
-    if type(indent) is int:
-        indent = indent * ' '
-    special_end = txt[-1:] == ['']
-    lines = ''.join(txt).splitlines(True)
-    for i in range(1,len(lines)):
-        if lines[i].strip() or indent.strip():
-            lines[i] = indent + lines[i]
-    if not lines:
-        return prepend
-    prepend = prepend[:len(indent)]
-    indent = indent[len(prepend):]
-    lines[0] = prepend + indent + lines[0]
-    ret = [''.join(lines)]
-    if special_end:
-        ret.append('')
-    return ret
+    def write(self, output_dir):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = (
+            self.filename.replace("gstlrn::", "")
+            .replace("gstlrn_", "")
+            .replace("::", "_")
+            .replace("/", "_")
+            .replace("|", "_")
+            .replace("=", "_")
+            .replace("<", "_")
+            .replace(">", "_")
+        )
+        rd_file = output_dir / f"{safe_name}.Rd"
+        with open(rd_file, "w", encoding="utf-8") as f:
+            f.write(self.to_rd())
+        return rd_file
 
-class Doxy2SWIG:
-    """Converts Doxygen generated XML files into a file containing
-    docstrings that can be used by SWIG-1.3.x that have support for
-    feature("docstring").  Once the data is parsed it is stored in
-    self.pieces.
 
-    """
+class Class:
+    def __init__(
+        self,
+        name="",
+        title="",
+        description="",
+        methods=None,
+        fields=None,
+        groups=None,
+        source="",
+        references="",
+        keyword="",
+        note="",
+    ):
+        self.name = name
+        self.title = title
+        self.description = description
+        self.methods = methods or []
+        self.fields = fields or []
+        self.groups = groups or []
+        self.source = source
+        self.references = references
+        self.keyword = keyword
+        self.note = note
 
-    def __init__(self, src,
-                 with_function_signature = False,
-                 with_type_info = False,
-                 with_constructor_list = False,
-                 with_attribute_list = False,
-                 with_overloaded_functions = False,
-                 textwidth = 80,
-                 quiet = False):
-        """Initialize the instance given a source object.  `src` can
-        be a file or filename.  If you do not want to include function
-        definitions from doxygen then set
-        `include_function_definition` to `False`.  This is handy since
-        this allows you to use the swig generated function definition
-        using %feature("autodoc", [0,1]).
+    def to_rd(self):
+        lines = []
+        clean_name = (
+            self.name.replace("gstlrn::", "")
+            .replace("gstlrn_", "")
+            .replace("[]", "_brackets")
+        )
+        if clean_name:
+            lines.append(f"\\name{{{clean_name}}}")
+            lines.append(f"\\alias{{{clean_name}}}")
+        if self.title:
+            lines.append(
+                f"\\title{{{self.title.replace('gstlrn::', '').replace('gstlrn_', '')}}}"
+            )
+        if self.description:
+            lines.append("\\description{\n" + self.description + "\n}")
+        if self.fields:
+            lines.append("\\format{")
+            lines.append("  \\describe{")
+            for f in self.fields:
+                lines.append(f"    \\item{{{f['name']}}}{{{f.get('description', '')}}}")
+            lines.append("  }")
+            lines.append("}")
 
-        """
-        # options:
-        self.with_function_signature = with_function_signature
-        self.with_type_info = with_type_info
-        self.with_constructor_list = with_constructor_list
-        self.with_attribute_list = with_attribute_list
-        self.with_overloaded_functions = with_overloaded_functions
-        self.textwidth = textwidth
-        self.quiet = quiet
+        if self.methods or self.groups:
+            lines.append("\\details{")
+            for g in self.groups:
+                lines.append(f"\\strong{{{g['title']}}}")
+                if g["description"]:
+                    lines.append(f"\n{g['description']}\n")
+                lines.append("  \\itemize{")
 
-        # state:
-        self.indent = 0
-        self.listitem = ''
-        self.pieces = []
+                for m_info in g["functions"]:
+                    m_name = m_info["name"]
+                    is_private = m_info["is_private"]
+                    is_static = m_info["is_static"]
+                    clean_m = (
+                        m_name.replace("gstlrn::", "")
+                        .replace("gstlrn_", "")
+                        .replace("::", "_")
+                    )
+                    if is_private:
+                        continue
+                    if is_static:
+                        lines.append(f"    \\item \\code{{{clean_name}_{clean_m}}}")
+                    else:
+                        lines.append(f"    \\item \\code{{{clean_m}}}")
 
-        f = my_open_read(src)
-        self.my_dir = os.path.dirname(f.name)
-        self.xmldoc = minidom.parse(f).documentElement
-        f.close()
+                lines.append("  }\n")
 
-        self.pieces.append('\n// File: %s\n' %
-                           os.path.basename(f.name))
+            if self.methods:
+                lines.append("Methods:")
+                lines.append("  \\itemize{")
 
-        self.space_re = re.compile(r'\s+')
-        self.lead_spc = re.compile(r'^(%feature\S+\s+\S+\s*?)"\s+(\S)')
-        self.multi = 0
-        self.ignores = ['inheritancegraph', 'param', 'listofallmembers',
-                        'innerclass', 'name', 'declname', 'incdepgraph',
-                        'invincdepgraph', 'programlisting', 'type',
-                        'references', 'referencedby', 'location',
-                        'collaborationgraph', 'reimplements',
-                        'reimplementedby', 'derivedcompoundref',
-                        'basecompoundref',
-                        'argsstring', 'definition', 'exceptions']
-        #self.generics = []
+                class_prefix = f"{self.name.replace('gstlrn::', '').replace('gstlrn_', '').replace('::', '_')}_"
 
-    def generate(self):
-        """Parses the file set in the initialization.  The resulting
-        data is stored in `self.pieces`.
+                for m in self.methods:
+                    clean_m = (
+                        m.replace("gstlrn::", "")
+                        .replace("gstlrn_", "")
+                        .replace("::", "_")
+                    )
 
-        """
-        self.parse(self.xmldoc)
+                    if clean_m.startswith(class_prefix):
+                        display_name = clean_m[len(class_prefix) :]
+                    else:
+                        display_name = (
+                            clean_m.split("_", 1)[-1] if "_" in clean_m else clean_m
+                        )
 
-    def write(self, fname):
-        o = my_open_write(fname)
-        o.write(''.join(self.pieces)) # FO : 23/03/2021
-        #o.write(''.join(self.pieces).encode('utf-8'))
-        o.write('\n')
-        o.close()
+                    display_name = re.sub(r"_\d+$", "", display_name)
 
-    def parse(self, node):
-        """Parse a given node.  This function in turn calls the
-        `parse_<nodeType>` functions which handle the respective
-        nodes.
+                    lines.append(
+                        f"    \\item \\link[={clean_m.replace('[]', '_brackets')}]{{{display_name}}}"
+                    )
+                lines.append("  }")
+            lines.append("}")
 
-        """
-        pm = getattr(self, "parse_%s" % node.__class__.__name__)
-        pm(node)
+        if self.note:
+            lines.append("\\note{\n" + self.note + "\n}")
+        if self.source:
+            lines.append("\\source{" + self.source + "}")
+        if self.references:
+            lines.append("\\references{" + self.references + "}")
+        if self.keyword:
+            lines.append(f"\\keyword{{{self.keyword}}}")
+        return "\n".join(lines)
 
-    def parse_Document(self, node):
-        self.parse(node.documentElement)
+    def write(self, output_dir):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = (
+            self.name.replace("gstlrn::", "")
+            .replace("gstlrn_", "")
+            .replace("::", "_")
+            .replace("/", "_")
+            .replace("|", "_")
+            .replace("=", "_")
+            .replace("<", "_")
+            .replace(">", "_")
+        )
+        rd_file = output_dir / f"{safe_name}.Rd"
+        with open(rd_file, "w", encoding="utf-8") as f:
+            f.write(self.to_rd())
+        return rd_file
 
-    def parse_Text(self, node):
-        txt = node.data
-        if txt == ' ':
-            # this can happen when two tags follow in a text, e.g.,
-            # " ...</emph> <formaula>$..." etc.
-            # here we want to keep the space.
-            self.add_text(txt)
-            return
-        txt = txt.replace('\\', r'\\')
-        txt = txt.replace('"', r'\"')
-        # ignore pure whitespace
-        m = self.space_re.match(txt)
-        if not (m and len(m.group()) == len(txt)):
-            self.add_text(txt)
 
-    def parse_Comment(self, node):
-        """Parse a `COMMENT_NODE`.  This does nothing for now."""
-        return
+class Enumeration:
+    def __init__(self, name, elements):
+        self.name = name
+        self.elements = elements
 
-    def parse_Element(self, node):
-        """Parse an `ELEMENT_NODE`.  This calls specific
-        `do_<tagName>` handers for different elements.  If no handler
-        is available the `subnode_parse` method is called.  All
-        tagNames specified in `self.ignores` are simply ignored.
+    def to_rd(self):
+        text = f"\\name{{ {self.name} }}\n"
+        text += f"\\alias{{ {self.name} }}\n"
+        text += f"\\title{{ {self.name} }}\n"
+        text += "\\details{{\n"
+        text += "  \\tabular{lll}{\n"
 
-        """
-        name = node.tagName
-        ignores = self.ignores
-        if name in ignores:
-            return
-        attr = "do_%s" % name
-        if hasattr(self, attr):
-            handlerMethod = getattr(self, attr)
-            handlerMethod(node)
-        else:
-            self.subnode_parse(node)
-            #if name not in self.generics: self.generics.append(name)
+        for idx, triplet in self.elements.items():
+            text += f"    {triplet[0]} \\tab {triplet[1]} \\tab {triplet[2]} \\cr\n"
 
-# MARK: Special format parsing
-    def subnode_parse(self, node, pieces=None, indent=0, ignore=[], restrict=None):
-        """Parse the subnodes of a given node. Subnodes with tags in the
-        `ignore` list are ignored. If pieces is given, use this as target for
-        the parse results instead of self.pieces. Indent all lines by the amount
-        given in `indent`. Note that the initial content in `pieces` is not
-        indented. The final result is in any case added to self.pieces."""
-        if pieces is not None:
-            old_pieces, self.pieces = self.pieces, pieces
-        else:
-            old_pieces = []
-        if type(indent) is int:
-            indent = indent * ' '
-        if len(indent) > 0:
-            pieces = ''.join(self.pieces)
-            i_piece = pieces[:len(indent)]
-            if self.pieces[-1:] == ['']:
-                self.pieces = [pieces[len(indent):]] + ['']
-            elif self.pieces != []:
-                self.pieces = [pieces[len(indent):]]
-        self.indent += len(indent)
-        for n in node.childNodes:
-            if restrict is not None:
-                if n.nodeType == n.ELEMENT_NODE and n.tagName in restrict:
-                    self.parse(n)
-            elif n.nodeType != n.ELEMENT_NODE or n.tagName not in ignore:
-                self.parse(n)
-        if len(indent) > 0:
-            self.pieces = shift(self.pieces, indent, i_piece)
-        self.indent -= len(indent)
-        old_pieces.extend(self.pieces)
-        self.pieces = old_pieces
+        text += "  }\n"
+        text += "}}"
+        return text
 
-    def surround_parse(self, node, pre_char, post_char):
-        """Parse the subnodes of a given node. Subnodes with tags in the
-        `ignore` list are ignored. Prepend `pre_char` and append `post_char` to
-        the output in self.pieces."""
-        self.add_text(pre_char)
-        self.subnode_parse(node)
-        self.add_text(post_char)
-    
-# MARK: Helper functions
-    def get_specific_subnodes(self, node, name, recursive=0):
-        """Given a node and a name, return a list of child `ELEMENT_NODEs`, that
-        have a `tagName` matching the `name`. Search recursively for `recursive`
-        levels.
-        """
-        children = [x for x in node.childNodes if x.nodeType == x.ELEMENT_NODE]
-        ret = [x for x in children if x.tagName == name]
-        if recursive > 0:
-            for x in children:
-                ret.extend(self.get_specific_subnodes(x, name, recursive-1))
-        return ret
+    def write(self, output_dir):
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = (
+            self.name.replace("gstlrn::", "")
+            .replace("gstlrn_", "")
+            .replace("::", "_")
+            .replace("/", "_")
+            .replace("|", "_")
+            .replace("=", "_")
+            .replace("<", "_")
+            .replace(">", "_")
+        )
+        rd_file = output_dir / f"{safe_name}.Rd"
+        with open(rd_file, "w", encoding="utf-8") as f:
+            f.write(self.to_rd())
+        return rd_file
 
-    def get_specific_nodes(self, node, names):
-        """Given a node and a sequence of strings in `names`, return a
-        dictionary containing the names as keys and child
-        `ELEMENT_NODEs`, that have a `tagName` equal to the name.
 
-        """
-        nodes = [(x.tagName, x) for x in node.childNodes
-                 if x.nodeType == x.ELEMENT_NODE and
-                 x.tagName in names]
-        return dict(nodes)
+class DoxygenParser:
+    def __init__(self, xml_directory):
+        self.xml_directory = Path(xml_directory)
 
-    def add_text(self, value):
-        """Adds text corresponding to `value` into `self.pieces`."""
-        if isinstance(value, (list, tuple)):
-            self.pieces.extend(value)
-        else:
-            self.pieces.append(value)
+    def _sanitize_rd_macros(self, text):
+        text = re.sub(r"(?<!\\)%", r"\\%", text)
+        text = text.replace("gstlrn::", "").replace("gstlrn_", "").replace("::", "_")
 
-    def start_new_paragraph(self):
-        """Make sure to create an empty line. This is overridden, if the previous
-        text ends with the special marker ''. In that case, nothing is done.
-        """
-        if self.pieces[-1:] == ['']: # respect special marker
-            return
-        elif self.pieces == []: # first paragraph, add '\n', override with ''
-            self.pieces = ['\n']
-        elif self.pieces[-1][-1:] != '\n': # previous line not ended
-            self.pieces.extend(['  \n' ,'\n'])
-        else: #default
-            self.pieces.append('\n')
+        valid_macros = {
+            "name",
+            "alias",
+            "docType",
+            "title",
+            "description",
+            "usage",
+            "arguments",
+            "item",
+            "value",
+            "format",
+            "note",
+            "source",
+            "references",
+            "keyword",
+            "details",
+            "itemize",
+            "describe",
+            "code",
+            "link",
+            "strong",
+            "eqn",
+            "deqn",
+            "enumerate",
+        }
 
-    def add_line_with_subsequent_indent(self, line, indent=4):
-        """Add line of text and wrap such that subsequent lines are indented
-        by `indent` spaces.
-        """
-        if isinstance(line, (list, tuple)):
-            line = ''.join(line)
-        line = line.strip()
-        width = self.textwidth-self.indent-indent
-        wrapped_lines = textwrap.wrap(line[indent:], width=width)
-        for i in range(len(wrapped_lines)):
-            if wrapped_lines[i] != '':
-                wrapped_lines[i] = indent * ' ' + wrapped_lines[i]
-        self.pieces.append(line[:indent] + '\n'.join(wrapped_lines)[indent:] + '  \n')
+        def replacer(match):
+            macro_name = match.group(1)
+            if macro_name not in valid_macros:
+                return "|" + macro_name
+            return match.group(0)
 
-    def extract_text(self, node):
-        """Return the string representation of the node or list of nodes by parsing the
-        subnodes, but returning the result as a string instead of adding it to `self.pieces`.
-        Note that this allows extracting text even if the node is in the ignore list.
-        """
-        if not isinstance(node, (list, tuple)):
-            node = [node]
-        pieces, self.pieces = self.pieces, ['']
-        for n in node:
-            for sn in n.childNodes:
-                self.parse(sn)
-        ret = ''.join(self.pieces)
-        self.pieces = pieces
-        return ret
+        return re.sub(r"\\([a-zA-Z]+)", replacer, text)
 
-    def get_function_signature(self, node):
-        """Returns the function signature string for memberdef nodes."""
-        name = self.extract_text(self.get_specific_subnodes(node, 'name'))
-        if self.with_type_info:
-            argsstring = self.extract_text(self.get_specific_subnodes(node, 'argsstring'))
-        else:
-            argsstring = []
-            param_id = 1
-            for n_param in self.get_specific_subnodes(node, 'param'):
-                declname = self.extract_text(self.get_specific_subnodes(n_param, 'declname'))
-                if not declname:
-                    declname = 'arg' + str(param_id)
-                defval = self.extract_text(self.get_specific_subnodes(n_param, 'defval'))
-                if defval:
-                    defval = '=' + defval
-                argsstring.append(declname + defval)
-                param_id = param_id + 1
-            argsstring = '(' + ', '.join(argsstring) + ')'
-        type = self.extract_text(self.get_specific_subnodes(node, 'type'))
-        function_definition = name + argsstring
-        if type != '' and type != 'void':
-            function_definition = function_definition + ' -> ' + type
-        return '`' + function_definition + '`  '
+    def _text(self, node, skip_params=False, skip_returns=False, skip_remarks=False):
+        if node is None:
+            return ""
+        parts = []
+        state = {"in_listitem": False}
 
-# MARK: Special parsing tasks (need to be called manually)
-    def make_constructor_list(self, constructor_nodes, classname):
-        """Produces the "Constructors" section and the constructor signatures
-        (since swig does not do so for classes) for class docstrings."""
-        if constructor_nodes == []:
-            return
-        self.add_text(['\n', 'Constructors',
-                       '\n', '------------'])
-        for n in constructor_nodes:
-            self.add_text('\n')
-            self.add_line_with_subsequent_indent('* ' + self.get_function_signature(n))
-            self.subnode_parse(n, pieces = [], indent=4, ignore=['definition', 'name'])
+        def get_inner_text(elem):
+            res = [elem.text or ""]
+            for c in elem:
+                res.append(get_inner_text(c))
+                res.append(c.tail or "")
+            return "".join(res)
 
-    def make_attribute_list(self, node):
-        """Produces the "Attributes" section in class docstrings for public
-        member variables (attributes).
-        """
-        atr_nodes = []
-        for n in self.get_specific_subnodes(node, 'memberdef', recursive=2):
-            if n.attributes['kind'].value == 'variable' and n.attributes['prot'].value == 'public':
-                atr_nodes.append(n)
-        if not atr_nodes:
-            return
-        self.add_text(['\n', 'Attributes',
-                       '\n', '----------'])
-        for n in atr_nodes:
-            name = self.extract_text(self.get_specific_subnodes(n, 'name'))
-            self.add_text(['\n* ', '`', name, '`', ' : '])
-            self.add_text(['`', self.extract_text(self.get_specific_subnodes(n, 'type')), '`'])
-            self.add_text('  \n')
-            restrict = ['briefdescription', 'detaileddescription']
-            self.subnode_parse(n, pieces=[''], indent=4, restrict=restrict)
-
-    def get_memberdef_nodes_and_signatures(self, node, kind):
-        """Collects the memberdef nodes and corresponding signatures that
-        correspond to public function entries that are at most depth 2 deeper
-        than the current (compounddef) node. Returns a dictionary with 
-        function signatures (what swig expects after the %feature directive)
-        as keys, and a list of corresponding memberdef nodes as values."""
-        sig_dict = {}
-        sig_prefix = ''
-        if kind in ('file', 'namespace'):
-            ns_node = node.getElementsByTagName('innernamespace')
-            if not ns_node and kind == 'namespace':
-                ns_node = node.getElementsByTagName('compoundname')
-            if ns_node:
-                sig_prefix = self.extract_text(ns_node[0]) + '::'
-        elif kind in ('class', 'struct'):
-            # Get the full function name.
-            cn_node = node.getElementsByTagName('compoundname')
-            sig_prefix = self.extract_text(cn_node[0]) + '::'
-
-        md_nodes = self.get_specific_subnodes(node, 'memberdef', recursive=2)
-        for n in md_nodes:
-            if n.attributes['prot'].value != 'public':
-                continue
-            if n.attributes['kind'].value in ['variable', 'typedef']:
-                continue
-            if not self.get_specific_subnodes(n, 'definition'):
-                continue
-            name = self.extract_text(self.get_specific_subnodes(n, 'name'))
-            if name[:8] == 'operator':
-                continue
-            sig = sig_prefix + name
-            if sig in sig_dict:
-                sig_dict[sig].append(n)
-            else:
-                sig_dict[sig] = [n]
-        return sig_dict
-    
-    def handle_typical_memberdefs_no_overload(self, signature, memberdef_nodes):
-        """Produce standard documentation for memberdef_nodes."""
-        for n in memberdef_nodes:
-            self.add_text(['\n', '%feature("docstring") ', signature, ' "', '\n'])
-            if self.with_function_signature:
-                self.add_line_with_subsequent_indent(self.get_function_signature(n))
-            self.subnode_parse(n, pieces=[], ignore=['definition', 'name'])
-            self.add_text(['";', '\n'])
-
-    def handle_typical_memberdefs(self, signature, memberdef_nodes):
-        """Produces docstring entries containing an "Overloaded function"
-        section with the documentation for each overload, if the function is
-        overloaded and self.with_overloaded_functions is set. Else, produce
-        normal documentation.
-        """
-        if len(memberdef_nodes) == 1 or not self.with_overloaded_functions:
-            self.handle_typical_memberdefs_no_overload(signature, memberdef_nodes)
-            return
-
-        self.add_text(['\n', '%feature("docstring") ', signature, ' "', '\n'])
-        if self.with_function_signature:
-            for n in memberdef_nodes:
-                self.add_line_with_subsequent_indent(self.get_function_signature(n))
-        self.add_text('\n')
-        self.add_text(['Overloaded function', '\n',
-                       '-------------------'])
-        for n in memberdef_nodes:
-            self.add_text('\n')
-            self.add_line_with_subsequent_indent('* ' + self.get_function_signature(n))
-            self.subnode_parse(n, pieces=[], indent=4, ignore=['definition', 'name'])
-        self.add_text(['";', '\n'])
-    
-
-# MARK: Tag handlers
-    def do_linebreak(self, node):
-        self.add_text('  ')
-    
-    def do_ndash(self, node):
-        self.add_text('--')
-
-    def do_mdash(self, node):
-        self.add_text('---')
-
-    def do_emphasis(self, node):
-        self.surround_parse(node, '*', '*')
-
-    def do_bold(self, node):
-        self.surround_parse(node, '**', '**')
-    
-    def do_computeroutput(self, node):
-        self.surround_parse(node, '`', '`')
-
-    def do_heading(self, node):
-        self.start_new_paragraph()
-        pieces, self.pieces = self.pieces, ['']
-        level = int(node.attributes['level'].value)
-        self.subnode_parse(node)
-        if level == 1:
-            self.pieces.insert(0, '\n')
-            self.add_text(['\n', len(''.join(self.pieces).strip()) * '='])
-        elif level == 2:
-            self.add_text(['\n', len(''.join(self.pieces).strip()) * '-'])
-        elif level >= 3:
-            self.pieces.insert(0, level * '#' + ' ')
-        # make following text have no gap to the heading:
-        pieces.extend([''.join(self.pieces) + '  \n', ''])
-        self.pieces = pieces
-    
-    def do_verbatim(self, node):
-        self.start_new_paragraph()
-        self.subnode_parse(node, pieces=[''], indent=4)
-    
-    def do_blockquote(self, node):
-        self.start_new_paragraph()
-        self.subnode_parse(node, pieces=[''], indent='> ')
-    
-    def do_hruler(self, node):
-        self.start_new_paragraph()
-        self.add_text('* * * * *  \n')
-    
-    def do_includes(self, node):
-        self.add_text('\nC++ includes: ')
-        self.subnode_parse(node)
-        self.add_text('\n')
-
-# MARK: Para tag handler
-    def do_para(self, node):
-        """This is the only place where text wrapping is automatically performed.
-        Generally, this function parses the node (locally), wraps the text, and
-        then adds the result to self.pieces. However, it may be convenient to
-        allow the previous content of self.pieces to be included in the text
-        wrapping. For this, use the following *convention*:
-        If self.pieces ends with '', treat the _previous_ entry as part of the
-        current paragraph. Else, insert new-line and start a new paragraph
-        and "wrapping context".
-        Paragraphs always end with '  \n', but if the parsed content ends with
-        the special symbol '', this is passed on.
-        """
-        if self.pieces[-1:] == ['']:
-            pieces, self.pieces = self.pieces[:-2], self.pieces[-2:-1]
-        else:
-            self.add_text('\n')
-            pieces, self.pieces = self.pieces, ['']
-        self.subnode_parse(node)
-        dont_end_paragraph = self.pieces[-1:] == ['']
-        # Now do the text wrapping:
-        width = self.textwidth - self.indent
-        wrapped_para = []
-        for line in ''.join(self.pieces).splitlines():
-            keep_markdown_newline = line[-2:] == '  '
-            w_line = textwrap.wrap(line, width=width, break_long_words=False)
-            if w_line == []:
-                w_line = ['']
-            if keep_markdown_newline:
-                w_line[-1] = w_line[-1] + '  '
-            for wl in w_line:
-                wrapped_para.append(wl + '\n')
-        if wrapped_para:
-            if wrapped_para[-1][-3:] != '  \n':
-                wrapped_para[-1] = wrapped_para[-1][:-1] + '  \n'
-            if dont_end_paragraph:
-                wrapped_para.append('')
-        pieces.extend(wrapped_para)
-        self.pieces = pieces
-
-# MARK: List tag handlers
-    def do_itemizedlist(self, node):
-        if self.listitem == '':
-            self.start_new_paragraph()
-        elif self.pieces != [] and self.pieces[-1:] != ['']:
-            self.add_text('\n')
-        listitem = self.listitem
-        if self.listitem in ['*', '-']:
-            self.listitem = '-'
-        else:
-            self.listitem = '*'
-        self.subnode_parse(node)
-        self.listitem = listitem
-
-    def do_orderedlist(self, node):
-        if self.listitem == '':
-            self.start_new_paragraph()
-        elif self.pieces != [] and self.pieces[-1:] != ['']:
-            self.add_text('\n')
-        listitem = self.listitem
-        self.listitem = 0
-        self.subnode_parse(node)
-        self.listitem = listitem
-
-    def do_listitem(self, node):
-        try:
-            self.listitem = int(self.listitem) + 1
-            item = str(self.listitem) + '. '
-        except:
-            item = str(self.listitem) + ' '
-        self.subnode_parse(node, item, indent=4)
-
-# MARK: Parameter list tag handlers
-    def do_parameterlist(self, node):
-        self.start_new_paragraph()
-        text = 'unknown'
-        for key, val in node.attributes.items():
-            if key == 'kind':
-                if val == 'param':
-                    text = 'Parameters'
-                elif val == 'exception':
-                    text = 'Exceptions'
-                elif val == 'retval':
-                    text = 'Returns'
-                else:
-                    text = val
-                break
-        if self.indent == 0:
-            self.add_text([text, '\n', len(text) * '-', '\n'])
-        else:
-            self.add_text([text, ':  \n'])
-        self.subnode_parse(node)
-
-    def do_parameteritem(self, node):
-        self.subnode_parse(node, pieces=['* ', ''])
-
-    def do_parameternamelist(self, node):
-        self.subnode_parse(node)
-        self.add_text([' :', '  \n'])
-    
-    def do_parametername(self, node):
-        if self.pieces != [] and self.pieces != ['* ', '']:
-            self.add_text(', ')
-        data = self.extract_text(node)
-        self.add_text(['`', data, '`'])
-
-    def do_parameterdescription(self, node):
-        self.subnode_parse(node, pieces=[''], indent=4)
-
-# MARK: Section tag handler
-    def do_simplesect(self, node):
-        kind = node.attributes['kind'].value
-        if kind in ('date', 'rcs', 'version'):
-            return
-        self.start_new_paragraph()
-        if kind == 'warning':
-            self.subnode_parse(node, pieces=['**Warning**: ',''], indent=4)
-        elif kind == 'see':
-            self.subnode_parse(node, pieces=['See also: ',''], indent=4)
-        elif kind == 'return':
-            if self.indent == 0:
-                pieces = ['Returns', '\n', len('Returns') * '-', '\n', '']
-            else:
-                pieces = ['Returns:', '\n', '']
-            self.subnode_parse(node, pieces=pieces)
-        else:
-            self.subnode_parse(node, pieces=[kind + ': ',''], indent=4)
-
-# MARK: %feature("docstring") producing tag handlers
-    def do_compounddef(self, node):
-        """This produces %feature("docstring") entries for classes, and handles
-        class, namespace and file memberdef entries specially to allow for 
-        overloaded functions. For other cases, passes parsing on to standard
-        handlers (which may produce unexpected results).
-        """
-        kind = node.attributes['kind'].value
-        if kind in ('class', 'struct'):
-            prot = node.attributes['prot'].value
-            if prot != 'public':
+        def walk(elem):
+            if (
+                skip_remarks
+                and elem.tag == "simplesect"
+                and elem.attrib.get("kind") in ("remark", "note")
+            ):
                 return
-            self.add_text('\n\n')
-            classdefn = self.extract_text(self.get_specific_subnodes(node, 'compoundname'))
-            classname = classdefn.split('::')[-1]
-            self.add_text('%%feature("docstring") %s "\n' % classdefn)
+            if (
+                skip_returns
+                and elem.tag == "simplesect"
+                and elem.attrib.get("kind") == "return"
+            ):
+                return
+            if (
+                skip_params
+                and elem.tag == "parameterlist"
+                and elem.attrib.get("kind") == "param"
+            ):
+                return
 
-            if self.with_constructor_list:
-                constructor_nodes = []
-                for n in self.get_specific_subnodes(node, 'memberdef', recursive=2):
-                    if n.attributes['prot'].value == 'public':
-                        if self.extract_text(self.get_specific_subnodes(n, 'definition')) == classdefn + '::' + classname:
-                            constructor_nodes.append(n)
-                for n in constructor_nodes:
-                    self.add_line_with_subsequent_indent(self.get_function_signature(n))
+            if elem.tag == "itemizedlist":
+                parts.append("\n\\itemize{\n")
 
-            names = ('briefdescription','detaileddescription')
-            sub_dict = self.get_specific_nodes(node, names)
-            for n in ('briefdescription','detaileddescription'):
-                if n in sub_dict:
-                    self.parse(sub_dict[n])
-            if self.with_constructor_list:
-                self.make_constructor_list(constructor_nodes, classname)
-            if self.with_attribute_list:
-                self.make_attribute_list(node)
+            if elem.tag == "orderedlist":
+                parts.append("\n\\enumerate{\n")
 
-            sub_list = self.get_specific_subnodes(node, 'includes')
-            if sub_list:
-                self.parse(sub_list[0])
-            self.add_text(['";', '\n'])
+            if elem.tag == "listitem":
+                parts.append("  \\item ")
+                state["in_listitem"] = True
 
-            names = ['compoundname', 'briefdescription','detaileddescription', 'includes']
-            self.subnode_parse(node, ignore = names)
+            if elem.tag == "ref":
+                text_content = get_inner_text(elem).strip()
+                clean_name = (
+                    text_content.replace("gstlrn::", "")
+                    .replace("gstlrn_", "")
+                    .replace("()", "")
+                    .replace("::", "_")
+                    .strip()
+                )
+                clean_text = text_content.replace("gstlrn::", "").replace("gstlrn_", "")
+                parts.append(f"\\link[={clean_name}]{{{clean_text}}}")
+                return
 
-        elif kind in ('file', 'namespace'):
-            nodes = node.getElementsByTagName('sectiondef')
-            for n in nodes:
-                self.parse(n)
+            if elem.tag == "formula":
+                form_text = (elem.text or "").strip()
+                if form_text.startswith("\\[") and form_text.endswith("\\]"):
+                    eq = form_text[2:-2].strip()
+                    parts.append(f"\n\\deqn{{{eq}}}{{{eq}}}\n")
+                elif form_text.startswith("$") and form_text.endswith("$"):
+                    eq = form_text[1:-1].strip()
+                    parts.append(f"\\eqn{{{eq}}}{{{eq}}}")
+                else:
+                    parts.append(f"\\eqn{{{form_text}}}{{{form_text}}}")
+                return
 
-        # now explicitely handle possibly overloaded member functions.
-        if kind in ['class', 'struct','file', 'namespace']:
-            md_nodes = self.get_memberdef_nodes_and_signatures(node, kind)
-            for sig in md_nodes:
-                self.handle_typical_memberdefs(sig, md_nodes[sig])
-    
-    def do_memberdef(self, node):
-        """Handle cases outside of class, struct, file or namespace. These are
-        now dealt with by `handle_overloaded_memberfunction`.
-        Do these even exist???
-        """
-        prot = node.attributes['prot'].value
-        id = node.attributes['id'].value
-        kind = node.attributes['kind'].value
-        tmp = node.parentNode.parentNode.parentNode
-        compdef = tmp.getElementsByTagName('compounddef')[0]
-        cdef_kind = compdef.attributes['kind'].value
-        if cdef_kind in ('file', 'namespace', 'class', 'struct'):
-            # These cases are now handled by `handle_typical_memberdefs`
-            return
-        if prot != 'public':
-            return
-        first = self.get_specific_nodes(node, ('definition', 'name'))
-        name = self.extract_text(first['name'])
-        if name[:8] == 'operator':  # Don't handle operators yet.
-            return
-        if not 'definition' in first or kind in ['variable', 'typedef']:
-            return
+            if elem.tag == "computeroutput" and elem.text and "<br/>" in elem.text:
+                parts.append(elem.text.replace("<br/>", "\n\n"))
+                return
 
-        data = self.extract_text(first['definition'])
-        self.add_text('\n')
-        self.add_text(['/* where did this entry come from??? */', '\n'])
-        self.add_text('%feature("docstring") %s "\n%s' % (data, data))
+            if elem.tag in ("para", "simplesect"):
+                if not state["in_listitem"] and parts:
+                    parts.append("\n\n")
 
-        for n in node.childNodes:
-            if n not in first.values():
-                self.parse(n)
-        self.add_text(['";', '\n'])
-    
-# MARK: Entry tag handlers (dont print anything meaningful)
-    def do_sectiondef(self, node):
-        kind = node.attributes['kind'].value
-        if kind in ('public-func', 'func', 'user-defined', ''):
-            self.subnode_parse(node)
+            if elem.text:
+                clean_text = re.sub(r"[\r\n\t]+", " ", elem.text)
+                parts.append(clean_text)
 
-    def do_header(self, node):
-        """For a user defined section def a header field is present
-        which should not be printed as such, so we comment it in the
-        output."""
-        data = self.extract_text(node)
-        self.add_text('\n/*\n %s \n*/\n' % data)
-        # If our immediate sibling is a 'description' node then we
-        # should comment that out also and remove it from the parent
-        # node's children.
-        parent = node.parentNode
-        idx = parent.childNodes.index(node)
-        if len(parent.childNodes) >= idx + 2:
-            nd = parent.childNodes[idx + 2]
-            if nd.nodeName == 'description':
-                nd = parent.removeChild(nd)
-                self.add_text('\n/*')
-                self.subnode_parse(nd)
-                self.add_text('\n*/\n')
+            for child in elem:
+                if child.tag == "linebreak" or child.tag == "br":
+                    parts.append("\n\n")
 
-    def do_member(self, node):
-        kind = node.attributes['kind'].value
-        refid = node.attributes['refid'].value
-        if kind == 'function' and refid[:9] == 'namespace':
-            self.subnode_parse(node)
+                walk(child)
 
-    def do_doxygenindex(self, node):
-        self.multi = 1
-        comps = node.getElementsByTagName('compound')
-        for c in comps:
-            refid = c.attributes['refid'].value
-            fname = refid + '.xml'
-            if not os.path.exists(fname):
-                fname = os.path.join(self.my_dir,  fname)
-            if not self.quiet:
-                print("parsing file: %s" % fname)
-            p = Doxy2SWIG(fname,
-                          with_function_signature = self.with_function_signature,
-                          with_type_info = self.with_type_info,
-                          with_constructor_list = self.with_constructor_list,
-                          with_attribute_list = self.with_attribute_list,
-                          with_overloaded_functions = self.with_overloaded_functions,
-                          textwidth = self.textwidth,
-                          quiet = self.quiet)
-            p.generate()
-            self.pieces.extend(p.pieces)
+                if child.tail:
+                    clean_tail = re.sub(r"[\r\n\t]+", " ", child.tail)
+                    parts.append(clean_tail)
 
-# MARK: main
-def main():
-    usage = __doc__
-    parser = optparse.OptionParser(usage)
-    parser.add_option("-f", '--function-signature',
-                      action='store_true',
-                      default=False,
-                      dest='f',
-                      help='include function signature in the documentation. This is handy when not using swig auto-generated function definitions %feature("autodoc", [0,1])')
-    parser.add_option("-t", '--type-info',
-                      action='store_true',
-                      default=False,
-                      dest='t',
-                      help='include type information for arguments in function signatures. This is similar to swig autodoc level 1')
-    parser.add_option("-c", '--constructor-list',
-                      action='store_true',
-                      default=False,
-                      dest='c',
-                      help='generate a constructor list for class documentation. Useful for target languages where the object construction should be documented in the class documentation.')
-    parser.add_option("-a", '--attribute-list',
-                      action='store_true',
-                      default=False,
-                      dest='a',
-                      help='generate an attributes list for class documentation. Useful for target languages where class attributes should be documented in the class documentation.')
-    parser.add_option("-o", '--overloaded-functions',
-                      action='store_true',
-                      default=False,
-                      dest='o',
-                      help='collect all documentation for overloaded functions. Useful for target languages that have no concept of overloaded functions, but also to avoid having to attach the correct docstring to each function overload manually')
-    parser.add_option("-w", '--width', type="int",
-                      action='store',
-                      dest='w',
-                      default=80,
-                      help='textwidth for wrapping (default: 80). Note that the generated lines may include 2 additional spaces (for markdown).')
-    parser.add_option("-q", '--quiet',
-                      action='store_true',
-                      default=False,
-                      dest='q',
-                      help='be quiet and minimize output')
-    
-    options, args = parser.parse_args()
-    if len(args) != 2:
-        parser.error("no input and output specified")
-    
-    p = Doxy2SWIG(args[0],
-                  with_function_signature = options.f,
-                  with_type_info = options.t,
-                  with_constructor_list = options.c,
-                  with_attribute_list = options.a,
-                  with_overloaded_functions = options.o,
-                  textwidth = options.w,
-                  quiet = options.q)
-    p.generate()
-    p.write(args[1])
+            if elem.tag == "listitem":
+                parts.append("\n")
+                state["in_listitem"] = False
 
-if __name__ == '__main__':
-    main()
+            if elem.tag == "orderedlist":
+                parts.append("}\n")
+
+            if elem.tag == "itemizedlist":
+                parts.append("}\n")
+
+        walk(node)
+
+        full_text = "".join(parts)
+        full_text = (
+            full_text.replace("<br/>", "\n\n")
+            .replace("<br >", "\n\n")
+            .replace("<br>", "\n\n")
+        )
+        full_text = re.sub(r"[ \t]+", " ", full_text)
+        full_text = re.sub(r"\n {1,}", "\n", full_text)
+        full_text = re.sub(r"\n{3,}", "\n\n", full_text)
+
+        return self._sanitize_rd_macros(full_text.strip())
+
+    def _extract_returns(self, node):
+        if node is None:
+            return ""
+        returns = []
+        for simplesect in node.findall(".//simplesect"):
+            if simplesect.attrib.get("kind") == "return":
+                returns.append(self._text(simplesect))
+        return self._format_links("\n\n".join(returns).strip())
+
+    def _extract_remarks(self, node):
+        if node is None:
+            return ""
+        remarks = []
+        for simplesect in node.findall(".//simplesect"):
+            if simplesect.attrib.get("kind") in ("remark", "note"):
+                remarks.append(self._text(simplesect))
+        return self._format_links("\n\n".join(remarks).strip())
+
+    def _format_links(self, text):
+        pattern = r"(?:\\|@)link\s+(\S+)\s+(.*?)\s*(?:\\|@)endlink"
+
+        def link_replacer(match):
+            target = (
+                match.group(1)
+                .replace("gstlrn::", "")
+                .replace("gstlrn_", "")
+                .replace("::", "_")
+            )
+            display = match.group(2).replace("gstlrn::", "").replace("gstlrn_", "")
+            return f"\\link[={target}]{{{display}}}"
+
+        text = re.sub(pattern, link_replacer, text)
+        return self._sanitize_rd_macros(text)
+
+    def _get_arguments(self, memberdef):
+        arguments = []
+        for param in memberdef.findall("param"):
+            pname = param.findtext("declname", "")
+            arguments.append({"name": pname, "description": ""})
+
+        detailed = memberdef.find("detaileddescription")
+        if detailed is not None:
+            for plist in detailed.findall(".//parameterlist"):
+                if plist.attrib.get("kind") != "param":
+                    continue
+                for item in plist.findall("parameteritem"):
+                    names = [self._text(x) for x in item.findall(".//parametername")]
+                    desc = self._text(item.find("parameterdescription"))
+                    desc = self._format_links(desc)
+                    for arg in arguments:
+                        if arg["name"] in names:
+                            arg["description"] = desc
+        return arguments
+
+    def parse(self):
+        functions = []
+        classes = []
+
+        doxygen_groups = {}
+        for group_file in self.xml_directory.glob("group__*.xml"):
+            try:
+                g_tree = ET.parse(group_file)
+                g_root = g_tree.getroot()
+                for compdef in g_root.findall(".//compounddef"):
+                    g_id = compdef.attrib.get("id", "")
+                    g_title = compdef.findtext("title", g_id)
+
+                    g_brief = self._text(
+                        compdef.find("briefdescription"),
+                        skip_params=True,
+                        skip_returns=True,
+                        skip_remarks=True,
+                    )
+                    g_detailed = self._text(
+                        compdef.find("detaileddescription"),
+                        skip_params=True,
+                        skip_returns=True,
+                        skip_remarks=True,
+                    )
+                    g_desc = self._format_links(
+                        "\n\n".join(x for x in [g_brief, g_detailed] if x)
+                    )
+
+                    g_funcs = []
+                    for m_node in compdef.findall(".//memberdef[@kind='function']"):
+                        g_m_name = m_node.findtext("name", "")
+                        if any(
+                            word in g_m_name
+                            for word in ["operator", "~", "final_scalar_type"]
+                        ):
+                            continue
+
+                        g_funcs.append(
+                            {
+                                "name": m_node.findtext("name", ""),
+                                "is_private": m_node.attrib.get("prot")
+                                in ("private", "protected"),
+                                "is_static": m_node.attrib.get("static") == "yes",
+                            }
+                        )
+
+                    doxygen_groups[g_id] = {
+                        "title": g_title,
+                        "description": g_desc,
+                        "functions": g_funcs,
+                    }
+            except Exception:
+                continue
+
+        for xml_file in self.xml_directory.glob("*.xml"):
+            if xml_file.name.startswith("group__"):
+                continue
+            try:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+            except Exception:
+                continue
+
+            for compounddef in root.findall(".//compounddef"):
+                kind = compounddef.attrib.get("kind", "")
+
+                if kind not in ("class", "struct", "file", "namespace"):
+                    continue
+
+                c_name = compounddef.findtext("compoundname", "")
+                brief_node = compounddef.find("briefdescription")
+                detailed_node = compounddef.find("detaileddescription")
+
+                brief = self._text(
+                    brief_node, skip_params=True, skip_returns=True, skip_remarks=True
+                )
+                detailed = self._text(
+                    detailed_node,
+                    skip_params=True,
+                    skip_returns=True,
+                    skip_remarks=True,
+                )
+                desc = self._format_links(
+                    "\n\n".join(x for x in [brief, detailed] if x)
+                )
+
+                c_remark = "\n\n".join(
+                    x
+                    for x in [
+                        self._extract_remarks(brief_node),
+                        self._extract_remarks(detailed_node),
+                    ]
+                    if x
+                )
+
+                methods = []
+                fields = []
+                class_bound_groups = {}
+                method_counts = {}
+
+                for member_node in compounddef.findall(".//member"):
+                    refid = member_node.attrib.get("refid", "")
+                    if (
+                        refid.startswith("group__")
+                        and member_node.attrib.get("kind") == "function"
+                    ):
+                        group_key = refid.split("_1g")[0] if "_1g" in refid else refid
+                        if group_key not in doxygen_groups:
+                            possible_keys = [
+                                k for k in doxygen_groups if refid.startswith(k)
+                            ]
+                            group_key = possible_keys[0] if possible_keys else None
+
+                        if group_key and group_key in doxygen_groups:
+                            if group_key not in class_bound_groups:
+                                class_bound_groups[group_key] = doxygen_groups[
+                                    group_key
+                                ]
+
+                for section in compounddef.findall("sectiondef"):
+                    for member in section.findall("memberdef"):
+                        if member.attrib.get("prot") in ("private", "protected"):
+                            continue
+                        m_name = member.findtext("name", "")
+                        m_kind = member.attrib.get("kind", "")
+
+                        if m_kind == "function":
+                            skip_words = ["operator", "~", "final_scalar_type"]
+                            is_in_any_group = any(
+                                any(f["name"] == m_name for f in g["functions"])
+                                for g in class_bound_groups.values()
+                            )
+                            if is_in_any_group:
+                                continue
+
+                            if kind in ("file", "namespace"):
+                                f_name = m_name
+                            else:
+                                f_name = f"{c_name}_{m_name}"
+
+                            if any(word in m_name for word in skip_words):
+                                continue
+
+                            if m_name not in method_counts:
+                                method_counts[m_name] = 1
+                                f_filename = f_name
+                            else:
+                                method_counts[m_name] += 1
+                                f_filename = f"{f_name}_{method_counts[m_name]}"
+
+                            if kind in ("class", "struct"):
+                                methods.append(f_filename)
+
+                            f_detailed_node = member.find("detaileddescription")
+                            f_desc = self._format_links(
+                                self._text(
+                                    f_detailed_node,
+                                    skip_params=True,
+                                    skip_returns=True,
+                                    skip_remarks=True,
+                                )
+                            )
+
+                            title = m_name
+                            usage_f_name = m_name
+                            if member.attrib.get("static") == "yes" and kind in (
+                                "class",
+                                "struct",
+                            ):
+                                title = f_name
+                                usage_f_name = f_name
+
+                            functions.append(
+                                Function(
+                                    name=f_name,
+                                    title=title,
+                                    description=f_desc,
+                                    usage=f"{usage_f_name}{member.findtext('argsstring', '')}",
+                                    arguments=self._get_arguments(member),
+                                    value=self._extract_returns(f_detailed_node),
+                                    note=self._extract_remarks(f_detailed_node),
+                                    filename=f_filename,
+                                )
+                            )
+                        elif m_kind in ("variable", "property") and kind in (
+                            "class",
+                            "struct",
+                        ):
+                            f_field_desc = self._format_links(
+                                self._text(member.find("briefdescription"))
+                            )
+                            fields.append({"name": m_name, "description": f_field_desc})
+
+                if kind in ("class", "struct"):
+                    if any(word in c_name for word in skip_words):
+                        continue
+
+                    classes.append(
+                        Class(
+                            name=c_name,
+                            title=c_name,
+                            description=desc,
+                            methods=methods,
+                            fields=fields,
+                            groups=list(class_bound_groups.values()),
+                            note=c_remark,
+                        )
+                    )
+
+        return functions, classes
+
+    def enum_parser(self, xml_file):
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+
+        initializer_node = root.find(".//memberdef[@kind='define']/initializer")
+
+        if initializer_node is not None:
+            raw_text = "".join(initializer_node.itertext())
+            clean_text = raw_text.replace("\\\n", "").replace("\\", "").strip()
+
+            reader = csv.reader([clean_text], skipinitialspace=True)
+            elements = next(reader)
+
+            enum_name = elements[0]
+
+            enum_dict = {}
+            counter = 1
+
+            for i in range(2, len(elements), 3):
+                if i + 2 < len(elements):
+                    key = elements[i]
+                    value = elements[i + 1]
+                    desc = elements[i + 2].strip()
+
+                    enum_dict[counter] = [key, value, desc]
+                    counter += 1
+
+            return Enumeration(enum_name, enum_dict)
+        else:
+            return None
+
+
+if __name__ == "__main__":
+    parser_args = argparse.ArgumentParser()
+    parser_args.add_argument("INPUT_DIR")
+    parser_args.add_argument("OUTPUT_DIR")
+    args = parser_args.parse_args()
+
+    print(f"Parsing Doxygen XML files from: {args.INPUT_DIR}")
+    parser = DoxygenParser(args.INPUT_DIR)
+    funcs, classes = parser.parse()
+
+    print(f"Writing output files to: {args.OUTPUT_DIR}")
+    for f in funcs:
+        f.write(args.OUTPUT_DIR)
+    for c in classes:
+        c.write(args.OUTPUT_DIR)
+
+    print(f"Parsing Enumeration XML files from: {args.INPUT_DIR}")
+    for file in os.listdir(args.INPUT_DIR):
+        if file.endswith(".xml") and file.startswith("E"):
+            xml_file_path = os.path.join(args.INPUT_DIR, file)
+            try:
+                enum_obj = parser.enum_parser(xml_file_path)
+                if enum_obj is not None:
+                    enum_obj.write(args.OUTPUT_DIR)
+            except Exception as e:
+                print(f"Error parsing {file}: {e}")
+                continue
