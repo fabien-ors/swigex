@@ -45,7 +45,7 @@ project(swigex
         HOMEPAGE_URL "https://github.com/fabien-ors/swigex"
         LANGUAGES    C CXX) # Enable C language for third party libraries
 # Use one of the following lines if you want to deliver a pre-release
-set (PROJECT_VERSION_SUFFIX a1)  # Alpha1
+#set (PROJECT_VERSION_SUFFIX a1)  # Alpha1
 #set (PROJECT_VERSION_SUFFIX b1)  # Beta1
 #set (PROJECT_VERSION_SUFFIX rc1) # Release Candidate1
 
